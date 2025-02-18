@@ -9,14 +9,12 @@ import inspect
 import importlib
 from pathlib import Path
 from types import ModuleType
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
-import torch
-import numpy as np
 from loguru import logger
 
 # ==============================================================================
-# === GLOBAL ===
+# === CONSTANT ===
 # ==============================================================================
 
 COZY_LOG_LEVEL = os.getenv("COZY_LOG_LEVEL", "INFO")
