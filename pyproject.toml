@@ -1,0 +1,32 @@
+[project]
+name = "cozy_comfyui"
+dynamic = ["version"]
+description = "Cozy ComfyUI Node support library"
+authors = [
+    { name = "Alexander G. Morano", email = "amorano@gmail.com" }
+]
+maintainers = [{ name = "Alexander G. Morano", email = "amorano@gmail.com" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aenum>=3.1.15",
+    "loguru",
+    "numpy>=1.26.4,<2.0.0; python_version <= '3.11'",
+    "numpy>=2.0.0; python_version >= '3.12'",
+    "opencv-contrib-python",
+    "Pillow",
+    "requests"
+]
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "cozy_comfyui.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["cozy_comfyui*"]
+namespaces = false
