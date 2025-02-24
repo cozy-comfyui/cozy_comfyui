@@ -2,10 +2,13 @@
 
 __version__ = "0.0.1"
 
+import os
+import sys
 import json
 from enum import Enum
-from typing import Any, List, Generator, Optional, Tuple, TypeAlias
+from typing import Any, Dict, List, Generator, Optional, Tuple, TypeAlias
 
+from loguru import logger as loguru_logger
 import torch
 
 # ==============================================================================
@@ -13,10 +16,28 @@ import torch
 # ==============================================================================
 
 TensorType: TypeAlias = torch.Tensor
+RGBAMaskType: TypeAlias = Tuple[TensorType, TensorType, TensorType]
 
 # ==============================================================================
 # === CONSTANT ===
 # ==============================================================================
+
+logger = loguru_logger.bind(cozy=True)
+has_cozy_handler = any(
+    "cozy" in h.filter_.__code__.co_code
+    for h in loguru_logger._core.handlers.values()
+    if hasattr(h, 'filter_') and h.filter_ is not None
+)
+
+if not has_cozy_handler:
+    loguru_logger.add(
+        sys.stdout,
+        level=os.getenv("COZY_LOG_LEVEL", "INFO"),
+        filter=lambda record: "cozy" in record["extra"],
+        enqueue=True
+)
+
+COZY_INTERNAL = os.getenv("COZY_INTERNAL", 'false').strip().lower() in ('true', '1', 't')
 
 MIN_IMAGE_SIZE: int = 32
 
@@ -50,7 +71,7 @@ class EnumConvertType(Enum):
 # === SUPPORT ===
 # ==============================================================================
 
-def deep_merge(d1: dict, d2: dict) -> dict:
+def deep_merge(d1: dict, d2: dict) -> Dict[str, str]:
     """
     Deep merge multiple dictionaries recursively.
 
@@ -246,8 +267,8 @@ def parse_param(data:dict, key:str, typ:EnumConvertType, default: Any,
         if val is None:
             val = [default]
             return val
-        elif isinstance(val, (list,)):
-            val = val[0]
+        #elif isinstance(val, (list,)):
+        #    val = val[0]
 
     if isinstance(val, (str,)):
         try: val = json.loads(val.replace("'", '"'))

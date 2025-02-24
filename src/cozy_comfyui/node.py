@@ -1,9 +1,5 @@
-"""
+"""."""
 
-"""
-
-import os
-import sys
 import json
 import inspect
 import importlib
@@ -11,19 +7,12 @@ from pathlib import Path
 from types import ModuleType
 from typing import Dict, Tuple
 
-from loguru import logger
+from cozy_comfyui import \
+    COZY_INTERNAL, \
+    logger
 
 # ==============================================================================
-# === CONSTANT ===
-# ==============================================================================
-
-COZY_LOG_LEVEL = os.getenv("COZY_LOG_LEVEL", "INFO")
-logger.configure(handlers=[{"sink": sys.stdout, "level": COZY_LOG_LEVEL}])
-
-COZY_INTERNAL = os.getenv("COZY_INTERNAL", 'false').strip().lower() in ('true', '1', 't')
-
-# ==============================================================================
-# === CLASS ===
+# === TYPE ===
 # ==============================================================================
 
 class CozyTypeAny(str):
@@ -34,64 +23,13 @@ class CozyTypeAny(str):
     def __ne__(self, __value: object) -> bool:
         return False
 
-class CozyBaseNode:
-    NOT_IDEMPOTENT = True
-    CATEGORY = "CozyBaseNode"
-    RETURN_TYPES = ()
-    FUNCTION = "run"
-
-    @classmethod
-    def IS_CHANGED(cls, **kw) -> float:
-        return float('nan')
-
-    @classmethod
-    def VALIDATE_INPUTS(cls, *arg, **kw) -> bool:
-        return True
-
-    @classmethod
-    def INPUT_TYPES(cls, prompt:bool=False, extra_png:bool=False, dynprompt:bool=False) -> dict:
-        data = {
-            "required": {},
-            "hidden": {
-                "ident": "UNIQUE_ID"
-            }
-        }
-        if prompt:
-            data["hidden"]["prompt"] = "PROMPT"
-        if extra_png:
-            data["hidden"]["extra_pnginfo"] = "EXTRA_PNGINFO"
-
-        if dynprompt:
-            data["hidden"]["dynprompt"] = "DYNPROMPT"
-        return data
-
-class CozyImageNode(CozyBaseNode):
-    RETURN_TYPES = ("IMAGE", "IMAGE", "MASK")
-    RETURN_NAMES = ("RGBA", "RGB", "MASK")
-    OUTPUT_TOOLTIPS = (
-        "Full channel [RGBA] image. If there is an alpha, the image will be masked out with it when using this output.",
-        "Three channel [RGB] image. There will be no alpha.",
-        "Single channel mask output."
-    )
-
-# ==============================================================================
-# === TYPE ===
-# ==============================================================================
-
 COZY_TYPE_ANY = CozyTypeAny("*")
 
-# want to make explicit entries; comfy only looks for single type
-COZY_TYPE_COMFY = "BOOLEAN,FLOAT,INT"
-COZY_TYPE_VECTOR = "VEC2,VEC3,VEC4,VEC2INT,VEC3INT,VEC4INT,COORD2D"
-COZY_TYPE_NUMBER = f"{COZY_TYPE_COMFY},{COZY_TYPE_VECTOR}"
+COZY_TYPE_NUMBER = "BOOLEAN,FLOAT,INT"
+COZY_TYPE_VECTOR = "VEC2,VEC3,VEC4,VEC2INT,VEC3INT,VEC4INT,COORD2D,COORD3D"
+COZY_TYPE_NUMERICAL = f"{COZY_TYPE_NUMBER},{COZY_TYPE_VECTOR}"
 COZY_TYPE_IMAGE = "IMAGE,MASK"
 COZY_TYPE_FULL = f"{COZY_TYPE_NUMBER},{COZY_TYPE_IMAGE}"
-
-COZY_TYPE_COMFY = COZY_TYPE_ANY
-COZY_TYPE_VECTOR = COZY_TYPE_ANY
-COZY_TYPE_NUMBER = COZY_TYPE_ANY
-COZY_TYPE_IMAGE = COZY_TYPE_ANY
-COZY_TYPE_FULL = COZY_TYPE_ANY
 
 # ==============================================================================
 # === SUPPORT ===
@@ -103,7 +41,6 @@ def load_module(root:str, name: str) -> None|ModuleType:
         route = name.split(f"{root}/")[1]
         route = route.split('.')[0].replace('/', '.')
         module = f"{root_module}.{route}"
-        # logger.debug(f"module: {module}")
     except Exception as e:
         logger.warning(f"module failed {name}")
         logger.warning(str(e))
@@ -128,16 +65,13 @@ def loader(root: str, pack: str, directory: str='',
     # package core root
     root = Path(root)
     root_str = str(root).replace("\\", "/")
-    #logger.debug(f"root_str: {root_str}")
     node_root = f"{directory}/**/*.py"
-    #logger.debug(f"node_root: {node_root}")
 
     for fname in root.glob(node_root):
         if fname.stem.startswith('_'):
             continue
 
         fname = str(fname).replace("\\", "/")
-        #logger.debug(f"fname: {fname}")
         if (module := load_module(root_str, fname)) is None:
             continue
 
@@ -171,3 +105,47 @@ def loader(root: str, pack: str, directory: str='',
             json.dump(NODE_LIST_MAP, f, sort_keys=True, indent=4 )
 
     return NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
+
+# ==============================================================================
+# === CLASS ===
+# ==============================================================================
+
+class CozyBaseNode:
+    NOT_IDEMPOTENT = True
+    CATEGORY = "CozyBaseNode"
+    RETURN_TYPES = ()
+    FUNCTION = "run"
+
+    @classmethod
+    def IS_CHANGED(cls, **kw) -> float:
+        return float('nan')
+
+    @classmethod
+    def VALIDATE_INPUTS(cls, input_types) -> bool:
+        return True
+
+    @classmethod
+    def INPUT_TYPES(cls, prompt:bool=False, extra_png:bool=False, dynprompt:bool=False) -> Dict[str, str]:
+        data = {
+            "required": {},
+            "hidden": {
+                "ident": "UNIQUE_ID"
+            }
+        }
+        if prompt:
+            data["hidden"]["prompt"] = "PROMPT"
+        if extra_png:
+            data["hidden"]["extra_pnginfo"] = "EXTRA_PNGINFO"
+
+        if dynprompt:
+            data["hidden"]["dynprompt"] = "DYNPROMPT"
+        return data
+
+class CozyImageNode(CozyBaseNode):
+    RETURN_TYPES = ("IMAGE", "IMAGE", "MASK")
+    RETURN_NAMES = ("RGBA", "RGB", "MASK")
+    OUTPUT_TOOLTIPS = (
+        "Full channel [RGBA] image. If there is an alpha, the image will be masked out with it when using this output.",
+        "Three channel [RGB] image. There will be no alpha.",
+        "Single channel mask output."
+    )

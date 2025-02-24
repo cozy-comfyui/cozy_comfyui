@@ -10,6 +10,7 @@ venv/
 .idea/
 .vscode/
 *.code-workspace
+.env
 
 # Build artifacts
 build/
