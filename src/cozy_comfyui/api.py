@@ -32,5 +32,6 @@ async def api_message_post(req) -> Any:
         data = ComfyAPIMessage.MESSAGE.get(str(did), [])
         data.append(json_data)
         ComfyAPIMessage.MESSAGE[str(did)] = data
-        return web.json_response(json_data)
-    return web.json_response({})
+    else:
+        json_data = {}
+    return web.json_response(json_data)
