@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 import os
 import sys
@@ -16,7 +16,8 @@ import torch
 # ==============================================================================
 
 TensorType: TypeAlias = torch.Tensor
-RGBAMaskType: TypeAlias = Tuple[TensorType, TensorType, TensorType]
+RGBAMaskType: TypeAlias = Tuple[TensorType, ...]
+InputType: TypeAlias = Dict[str, Tuple[str|List[str], Dict[str, Any]]]
 
 # ==============================================================================
 # === CONSTANT ===
@@ -142,6 +143,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
         val = default
 
     if isinstance(val, dict):
+        # old jovimetrix index?
         if '0' in val or 0 in val:
             val = [val.get(i, val.get(str(i), 0)) for i in range(min(len(val), 4))]
         # coord2d?
@@ -184,29 +186,37 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
                 if v == '':
                     v = 0
 
-            if typ in [EnumConvertType.FLOAT, EnumConvertType.VEC2, EnumConvertType.VEC3, EnumConvertType.VEC4]:
-                v = round(float(v or 0), 16)
-            else:
-                v = int(v)
-            if clip_min is not None:
-                v = max(v, clip_min)
-            if clip_max is not None:
-                v = min(v, clip_max)
+            try:
+                if typ in [EnumConvertType.FLOAT, EnumConvertType.VEC2, EnumConvertType.VEC3, EnumConvertType.VEC4]:
+                    v = round(float(v or 0), 16)
+                else:
+                    v = int(v)
+                if clip_min is not None:
+                    v = max(v, clip_min)
+                if clip_max is not None:
+                    v = min(v, clip_max)
+            except Exception as e:
+                logger.exception(e)
+                logger.error(f"Error converting value: {val} -- {v}")
+                v = 0
 
             if v == 0:
                 v = zero
             new_val.append(v)
         new_val = new_val[0] if size == 1 else tuple(new_val)
     elif typ == EnumConvertType.DICT:
-        if isinstance(new_val, (str,)):
-            try:
-                new_val = json.loads(new_val)
-            except json.decoder.JSONDecodeError:
-                new_val = {}
-        else:
-            if not isinstance(new_val, (list, tuple,)):
-                new_val = [new_val]
-            new_val = {i: v for i, v in enumerate(new_val)}
+        try:
+            if isinstance(new_val, (str,)):
+                try:
+                    new_val = json.loads(new_val)
+                except json.decoder.JSONDecodeError:
+                    new_val = {}
+            else:
+                if not isinstance(new_val, (list, tuple,)):
+                    new_val = [new_val]
+                new_val = {i: v for i, v in enumerate(new_val)}
+        except Exception as e:
+            logger.exception(e)
     elif typ == EnumConvertType.LIST:
         new_val = list(new_val)
     elif typ == EnumConvertType.STRING:
@@ -265,15 +275,14 @@ def parse_param(data:dict, key:str, typ:EnumConvertType, default: Any,
     val = data.get(key, default)
     if typ == EnumConvertType.ANY:
         if val is None:
-            val = [default]
-            return val
+            return [default]
         #elif isinstance(val, (list,)):
         #    val = val[0]
 
     if isinstance(val, (str,)):
         try: val = json.loads(val.replace("'", '"'))
         except json.JSONDecodeError: pass
-    # see if we are a hacked vector blob... {0:x, 1:y, 2:z, 3:w}
+    # see if we are a Jovimetrix hacked vector blob... {0:x, 1:y, 2:z, 3:w}
     elif isinstance(val, dict):
         # mixlab layer?
         if (image := val.get('image', None)) is not None:
