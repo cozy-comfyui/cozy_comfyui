@@ -35,3 +35,17 @@ async def api_message_post(req) -> Any:
     else:
         json_data = {}
     return web.json_response(json_data)
+
+# ==============================================================================
+# === SUPPORT ===
+# ==============================================================================
+
+def parse_reset(ident:str) -> int:
+    try:
+        data = ComfyAPIMessage.poll(ident, timeout=0.05)
+        ret = data.get('cmd', None)
+        return ret == 'reset'
+    except TimedOutException as e:
+        return -1
+    except Exception as e:
+        logger.error(str(e))

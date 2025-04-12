@@ -59,9 +59,6 @@ def loader(root: str, pack: str, directory: str='',
     NODE_DISPLAY_NAME_MAPPINGS = {}
     NODE_LIST_MAP = {}
 
-    # where to put it inside of ComfyUI menus
-    CozyBaseNode.CATEGORY = category
-
     # package core root
     root = Path(root)
     root_str = str(root).replace("\\", "/")
@@ -90,6 +87,7 @@ def loader(root: str, pack: str, directory: str='',
                 NODE_CLASS_MAPPINGS[name] = class_object
                 desc = class_object.DESCRIPTION if hasattr(class_object, 'DESCRIPTION') else name
                 NODE_LIST_MAP[name] = desc.split('.')[0].strip('\n')
+                class_object.CATEGORY = category
 
     NODE_CLASS_MAPPINGS = {x[0] : x[1] for x in sorted(NODE_CLASS_MAPPINGS.items(),
                                                             key=lambda item: getattr(item[1], 'SORT', 0))}
@@ -111,6 +109,7 @@ def loader(root: str, pack: str, directory: str='',
 # ==============================================================================
 
 class CozyBaseNode:
+    INPUT_IS_LIST = True
     NOT_IDEMPOTENT = True
     CATEGORY = "CozyBaseNode"
     RETURN_TYPES = ()
