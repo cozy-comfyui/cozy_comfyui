@@ -1,8 +1,7 @@
 aenum
 aiohttp
 loguru
-numpy>=1.26.4,<2.0.0; python_version <= '3.11'
-numpy>=2.0.0; python_version >= '3.12'
+numpy<2
 opencv-contrib-python
 Pillow
 requests
