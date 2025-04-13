@@ -350,7 +350,7 @@ def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
         elif isinstance(val, (list, tuple, set)):
             if isinstance(val, (tuple, set,)):
                 val = list(val)
-            value_array.extend(val)
+            value_array.append(val)
         elif issubclass(type(val), (Enum,)):
             val = str(val.name)
             value_array.append(val)
