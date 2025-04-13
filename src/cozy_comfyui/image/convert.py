@@ -9,8 +9,11 @@ import torch
 import numpy as np
 from PIL import Image, ImageOps
 
-from .. import TensorType
-from ..image import RGBA_Int, ImageType
+from .. import \
+    TensorType
+
+from ..image import \
+    RGBA_Int, ImageType
 
 # ==============================================================================
 # === SUPPPORT ===

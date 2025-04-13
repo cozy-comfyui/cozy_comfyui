@@ -1,17 +1,35 @@
 """Image processing support module for handling various image formats and conversions."""
 
-
+from enum import Enum
 from typing import List, Tuple
 
 import cv2
+import torch
 import requests
 import numpy as np
 from PIL import Image, ImageOps
 
-from .. import  MIN_IMAGE_SIZE
+from .. import \
+    IMAGE_SIZE_MIN, \
+    RGBAMaskType
+
 from . import \
     ImageType
+
 from .masking import image_mask
+
+# ==============================================================================
+# === ENUMERATION ===
+# ==============================================================================
+
+class EnumInterpolation(Enum):
+    NEAREST = cv2.INTER_NEAREST
+    LINEAR = cv2.INTER_LINEAR
+    CUBIC = cv2.INTER_CUBIC
+    AREA = cv2.INTER_AREA
+    LANCZOS4 = cv2.INTER_LANCZOS4
+    LINEAR_EXACT = cv2.INTER_LINEAR_EXACT
+    NEAREST_EXACT = cv2.INTER_NEAREST_EXACT
 
 # ==============================================================================
 # === SUPPPORT ===
@@ -92,9 +110,9 @@ def image_load(url: str) -> Tuple[ImageType, ...]:
 
     return img, mask
 
-def image_minmax(image:List[ImageType]) -> Tuple[int, int, int, int]:
+def image_minmax(image: List[ImageType]) -> Tuple[int, int, int, int]:
     h_min = w_min = 100000000000
-    h_max = w_max = MIN_IMAGE_SIZE
+    h_max = w_max = IMAGE_SIZE_MIN
     for img in image:
         if img is None:
             continue
@@ -116,7 +134,11 @@ def image_normalize(image: ImageType) -> ImageType:
     image = (image - img_min) / (img_max - img_min)
     return (image * 255).astype(np.uint8)
 
+def image_resize(image: ImageType, width: int, height: int, sample: EnumInterpolation) -> ImageType:
+    return cv2.resize(image, (width, height), interpolation=sample)
 
+def image_stack(images: List[ImageType] ) -> RGBAMaskType:
+    return [torch.stack(i) for i in zip(*images)]
 
 '''
 @TODO: this is a color function

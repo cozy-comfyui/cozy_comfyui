@@ -2,8 +2,11 @@
 
 import numpy as np
 
-from ..image.convert import image_convert
-from ..image import RGBA_Int, ImageType
+from ..image.convert import \
+    image_convert
+
+from ..image import \
+    RGBA_Int, ImageType
 
 # ==============================================================================
 # === SUPPPORT ===

@@ -40,7 +40,9 @@ if not has_cozy_handler:
 
 COZY_INTERNAL = os.getenv("COZY_INTERNAL", 'false').strip().lower() in ('true', '1', 't')
 
-MIN_IMAGE_SIZE: int = 32
+IMAGE_SIZE_MIN: int = 32
+IMAGE_SIZE_MAX: int = 8192
+IMAGE_SIZE_DEFAULT: int = 512
 
 # ==============================================================================
 # === ENUMERATION ===
@@ -91,6 +93,13 @@ def deep_merge(d1: dict, d2: dict) -> Dict[str, str]:
         else:
             d1[key] = d2[key]
     return d1
+
+def load_file(fname: str) -> str | None:
+    try:
+        with open(fname, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(e)
 
 def parse_dynamic(data:dict, prefix:str, typ:EnumConvertType, default: Any) -> List[Any]:
     """Convert iterated input field(s) based on a s into a single compound list of entries.
@@ -257,7 +266,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
         if not isinstance(new_val, (torch.Tensor,)):
             color = parse_value(new_val, EnumConvertType.VEC4INT, (0,0,0,255), 0, 255)
             color = torch.tensor(color, dtype=torch.int32).tolist()
-            new_val = torch.empty((MIN_IMAGE_SIZE, MIN_IMAGE_SIZE, 4), dtype=torch.uint8)
+            new_val = torch.empty((IMAGE_SIZE_MIN, IMAGE_SIZE_MIN, 4), dtype=torch.uint8)
             new_val[0,:,:] = color[0]
             new_val[1,:,:] = color[1]
             new_val[2,:,:] = color[2]
@@ -267,7 +276,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
         if not isinstance(new_val, (torch.Tensor,)):
             color = parse_value(new_val, EnumConvertType.INT, 0, 0, 255)
             color = torch.tensor(color, dtype=torch.int32).tolist()
-            new_val = torch.empty((MIN_IMAGE_SIZE, MIN_IMAGE_SIZE, 1), dtype=torch.uint8)
+            new_val = torch.empty((IMAGE_SIZE_MIN, IMAGE_SIZE_MIN, 1), dtype=torch.uint8)
             new_val[0,:,:] = color
 
     elif issubclass(typ, Enum):

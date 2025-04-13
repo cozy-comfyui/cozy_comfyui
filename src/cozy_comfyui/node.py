@@ -5,7 +5,7 @@ import inspect
 import importlib
 from pathlib import Path
 from types import ModuleType
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 from cozy_comfyui import \
     COZY_INTERNAL, \
@@ -107,6 +107,17 @@ def loader(root: str, pack: str, directory: str='',
 # ==============================================================================
 # === CLASS ===
 # ==============================================================================
+
+class Singleton(type):
+    """THERE CAN BE ONLY ONE"""
+    _instances = {}
+
+    def __call__(cls, *arg, **kw) -> Any:
+        # If the instance does not exist, create and store it
+        if cls not in cls._instances:
+            instance = super().__call__(*arg, **kw)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
 
 class CozyBaseNode:
     INPUT_IS_LIST = True
