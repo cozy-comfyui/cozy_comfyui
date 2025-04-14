@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/04/14** @0.0.8:
+* force fixed import problem in comfyui
+
 **2025/04/14** @0.0.7:
 * merged more conversion functions
 * added more TYPES

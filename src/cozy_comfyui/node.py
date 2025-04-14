@@ -1,5 +1,6 @@
 """."""
 
+import sys
 import json
 import inspect
 import importlib
@@ -68,6 +69,8 @@ def loader(root: str, pack: str, directory: str='',
     # package core root
     root = Path(root)
     root_str = str(root).replace("\\", "/")
+    core = str(root.parent)
+    sys.path.append(core)
     node_root = f"{directory}/**/*.py"
 
     for fname in root.glob(node_root):
