@@ -27,7 +27,11 @@ def comfy_api_post(route:str, ident:str, data:Dict[str, Any]) -> None:
     data['id'] = ident
     PromptServer.instance.send_sync(route, data)
 
-@PromptServer.instance.routes.post(f"/cozy_comfyui")
+@PromptServer.instance.routes.get("/cozy_comfyui/message")
+async def api_message_post(req) -> Any:
+    return web.json_response(ComfyAPIMessage.MESSAGE)
+
+@PromptServer.instance.routes.post(f"/cozy_comfyui/message")
 async def api_message_post(req) -> Any:
     json_data = await req.json()
     if (did := json_data.get("id")) is not None:
