@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/04/14** @0.0.10:
+* updated matte function
+
 **2025/04/14** @0.0.9:
 * migrated old routes from Jovimetrix
 

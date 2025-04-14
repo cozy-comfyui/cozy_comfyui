@@ -233,26 +233,25 @@ def image_mask_add(image:ImageType, mask:ImageType=None, alpha:float=255) -> Ima
     """
     image = image_convert(image, 4)
     mask = image_mask(image, alpha) if mask is None else image_convert(mask, 1)
+    h, w, c = image.shape
+    mask = cv2.resize(mask, (w, h))
     image[..., 3] = mask if mask.ndim == 2 else mask[:, :, 0]
     return image
 
-def image_matte(image: ImageType, color: RGBA_Int=(0,0,0,255),
+def image_matte(image: ImageType, color: RGBA_Int=(0, 0, 0, 255),
                 width: int=None, height: int=None) -> ImageType:
     """
-    Puts an RGBA image atop a colored matte expanding or clipping the image if requested.
+    Puts an RGB(A) image atop a colored matte expanding or clipping the image if requested.
 
     Args:
-        image (ImageType): The input RGBA image.
-        color (RGBA_Int): The color of the matte as a tuple (R, G, B, A).
+        image (TYPE_IMAGE): The input RGBA image.
+        color (TYPE_iRGBA): The color of the matte as a tuple (R, G, B, A).
         width (int, optional): The width of the matte. Defaults to the image width.
         height (int, optional): The height of the matte. Defaults to the image height.
 
     Returns:
-        ImageType: Composited RGBA image on a matte with original alpha channel.
+        TYPE_IMAGE: Composited RGBA image on a matte with original alpha channel.
     """
-
-    #if image.ndim != 4 or image.shape[2] != 4:
-    #    return image
 
     # Determine the dimensions of the image and the matte
     image_height, image_width = image.shape[:2]
@@ -260,28 +259,29 @@ def image_matte(image: ImageType, color: RGBA_Int=(0,0,0,255),
     height = height or image_height
 
     # Create a solid matte with the specified color
-    matte = np.full((height, width, 4), color, dtype=np.uint8)
-
-    # Extract the alpha channel from the image
-    alpha = None
-    if image.ndim == 3 and image.shape[2] == 4:
-        alpha = image[:, :, 3] / 255.0
+    matte = np.full((height, width, 4), color, dtype=image.dtype)
 
     # Calculate the center position for the image on the matte
     x_offset = (width - image_width) // 2
     y_offset = (height - image_height) // 2
 
-    if alpha is not None:
-        # Place the image onto the matte using the alpha channel for blending
-        for c in range(0, 3):
+    # Extract the alpha channel from the image if it's RGBA
+    if image.ndim == 3 and image.shape[2] == 4:
+        alpha = image[:, :, 3] / 255.0
+
+        # Blend the RGB channels using the alpha mask
+        for c in range(3):  # Iterate over RGB channels
             matte[y_offset:y_offset + image_height, x_offset:x_offset + image_width, c] = \
                 (1 - alpha) * matte[y_offset:y_offset + image_height, x_offset:x_offset + image_width, c] + \
                 alpha * image[:, :, c]
 
-        # Set the alpha channel of the matte to the maximum of the matte's and the image's alpha
-        matte[y_offset:y_offset + image_height, x_offset:x_offset + image_width, 3] = \
-            np.maximum(matte[y_offset:y_offset + image_height, x_offset:x_offset + image_width, 3], image[:, :, 3])
+        # Set the alpha channel to the image's alpha channel
+        matte[y_offset:y_offset + image_height, x_offset:x_offset + image_width, 3] = image[:, :, 3]
     else:
-        image = image[y_offset:y_offset + image_height, x_offset:x_offset + image_width, :]
-    return matte
+        # Handle non-RGBA images (just copy the image onto the matte)
+        if image.ndim == 2:
+            image = np.expand_dims(image, axis=-1)
+            image = np.repeat(image, 3, axis=-1)
+        matte[y_offset:y_offset + image_height, x_offset:x_offset + image_width, :3] = image[:, :, :3]
 
+    return matte
