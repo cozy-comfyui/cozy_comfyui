@@ -1,10 +1,12 @@
 """."""
 
 from typing import Any, Dict
+
 from aiohttp import web
 from server import PromptServer
 
-from .. import PACKAGE
+from . import \
+    logger
 
 # ==============================================================================
 # === SERVER ===
@@ -25,7 +27,7 @@ def comfy_api_post(route:str, ident:str, data:Dict[str, Any]) -> None:
     data['id'] = ident
     PromptServer.instance.send_sync(route, data)
 
-@PromptServer.instance.routes.post(f"/{PACKAGE.lower()}")
+@PromptServer.instance.routes.post(f"/cozy_comfyui")
 async def api_message_post(req) -> Any:
     json_data = await req.json()
     if (did := json_data.get("id")) is not None:

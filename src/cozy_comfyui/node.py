@@ -53,7 +53,13 @@ def load_module(root:str, name: str) -> None|ModuleType:
         logger.warning(str(e))
 
 def loader(root: str, pack: str, directory: str='',
-           category: str="COZY COMFYUI ☕") -> Tuple[Dict[str, object], Dict[str, str]]:
+           category: str="COZY COMFYUI ☕",
+           rename: bool=True) -> Tuple[Dict[str, object], Dict[str, str]]:
+
+    """
+    rename will force the new name from the existing definition on the old node.
+    Currently used to support older Jovimetrix nodes
+    """
 
     NODE_CLASS_MAPPINGS = {}
     NODE_DISPLAY_NAME_MAPPINGS = {}
@@ -74,28 +80,30 @@ def loader(root: str, pack: str, directory: str='',
 
         # check if there is a dynamic register function....
         try:
-            for class_name, class_def in module.import_dynamic():
-                setattr(module, class_name, class_def)
+            if hasattr(module, 'import_dynamic'):
+                for class_name, class_def in module.import_dynamic():
+                    setattr(module, class_name, class_def)
         except Exception as e:
-            pass
+            logger.exception(str(e))
 
         classes = inspect.getmembers(module, inspect.isclass)
         for class_name, class_object in classes:
-            if not class_name.endswith('BaseNode') and hasattr(class_object, 'NAME') and hasattr(class_object, 'CATEGORY'):
-                name = f"{class_object.NAME} ({pack})"
+            if not class_name.endswith('BaseNode') and hasattr(class_object, 'NAME'): # and hasattr(class_object, 'CATEGORY'):
+                name = f"{class_object.NAME} ({pack})" if rename else class_object.NAME
                 NODE_DISPLAY_NAME_MAPPINGS[name] = name
                 NODE_CLASS_MAPPINGS[name] = class_object
                 desc = class_object.DESCRIPTION if hasattr(class_object, 'DESCRIPTION') else name
                 NODE_LIST_MAP[name] = desc.split('.')[0].strip('\n')
-                class_object.CATEGORY = category
+                if not hasattr(class_object, 'CATEGORY'):
+                    class_object.CATEGORY = category
 
     NODE_CLASS_MAPPINGS = {x[0] : x[1] for x in sorted(NODE_CLASS_MAPPINGS.items(),
                                                             key=lambda item: getattr(item[1], 'SORT', 0))}
 
     keys = NODE_CLASS_MAPPINGS.keys()
-    for name in keys:
-        logger.debug(f"✅ {name}")
-    logger.info(f"{len(keys)} nodes loaded")
+    #for name in keys:
+    #    logger.debug(f"✅ {name}")
+    logger.info(f"{pack} {len(keys)} nodes loaded")
 
     # only do the list on local runs...
     if COZY_INTERNAL:
@@ -122,7 +130,6 @@ class Singleton(type):
 class CozyBaseNode:
     INPUT_IS_LIST = True
     NOT_IDEMPOTENT = True
-    CATEGORY = "CozyBaseNode"
     RETURN_TYPES = ()
     FUNCTION = "run"
 

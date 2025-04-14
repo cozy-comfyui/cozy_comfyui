@@ -9,10 +9,7 @@ from . import \
     ImageType, Coord2D_Float
 
 from .convert import \
-    image_convert
-
-from .masking import \
-    image_mask, image_mask_add
+    image_convert, image_mask, image_mask_add
 
 # ==============================================================================
 # === SUPPPORT ===

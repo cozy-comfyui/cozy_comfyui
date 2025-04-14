@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from typing import List, Tuple, TypeAlias
+from enum import Enum
+from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
 from PIL import Image
@@ -25,6 +26,19 @@ Coord2D_Float: TypeAlias = Tuple[float, float]
 Coord3D_Float: TypeAlias = Tuple[float, float, float]
 
 ImageType: TypeAlias = np.ndarray
+ImageType: TypeAlias = np.ndarray
+PixelType: TypeAlias = Union[int, float, RGB_Int, RGBA_Int, RGB_Float, RGBA_Float]
+
+# ==============================================================================
+# === ENUMERATION ===
+# ==============================================================================
+
+class EnumImageType(Enum):
+    GRAYSCALE = 0
+    RGB = 10
+    RGBA = 20
+    BGR = 30
+    BGRA = 40
 
 # ==============================================================================
 # === CONSTANT ===
