@@ -16,7 +16,6 @@ from .convert import \
 # ==============================================================================
 
 def image_crop(image: ImageType, width:int=None, height:int=None, offset:Tuple[float, float]=(0, 0)) -> ImageType:
-    h, w = image.shape[:2]
     width = width if width is not None else w
     height = height if height is not None else h
     x, y = offset
