@@ -126,8 +126,7 @@ class Singleton(type):
     def __call__(cls, *arg, **kw) -> Any:
         # If the instance does not exist, create and store it
         if cls not in cls._instances:
-            instance = super().__call__(*arg, **kw)
-            cls._instances[cls] = instance
+            cls._instances[cls] = super().__call__(*arg, **kw)
         return cls._instances[cls]
 
 class CozyBaseNode:

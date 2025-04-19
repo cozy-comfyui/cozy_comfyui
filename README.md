@@ -1,6 +1,10 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/04/19** @0.0.11:
+* reduced convoluted logic for parsing tensors
+* contemplating removing mixlab support
+
 **2025/04/14** @0.0.10:
 * updated matte function
 

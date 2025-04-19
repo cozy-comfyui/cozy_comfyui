@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.10"
+__version__ = "0.0.11"
 
 import os
 import sys
@@ -122,18 +122,7 @@ def parse_dynamic(data:dict, prefix:str, typ:EnumConvertType, default: Any) -> L
         for k in keys:
             if k.startswith(f"{i}_") or k.startswith(f"{i}_{prefix}_"):
                 val = parse_param(data, k, typ, default)
-                if isinstance(val, (list, set, tuple,)):
-                    vals.extend(val)
-                elif isinstance(val, (torch.Tensor,)):
-                    # a batch of RGB(A)
-                    if val.ndim > 3:
-                        val = [t for t in val]
-                    # a batch of Grayscale
-                    else:
-                        val = [t.unsqueeze(-1) for t in val]
-                    vals.extend(val)
-                else:
-                    vals.append(val)
+                vals.extend(val)
                 found = True
                 break
 
@@ -319,10 +308,9 @@ def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
                     while len(mask.shape) < len(image.shape):
                         mask = mask.unsqueeze(-1)
                     ret = torch.cat((image, mask), dim=-1)
-                if ret.ndim > 3:
-                    val = [t for t in ret]
-                elif ret.ndim == 3:
+                if ret.ndim == 2:
                     val = [v.unsqueeze(-1) for v in ret]
+                val = [t for t in ret]
                 value_array.extend(val)
             # vector patch....
             elif 'xyzw' in val:
@@ -340,12 +328,10 @@ def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
                 val = tuple()
             value_array.append(val)
         elif isinstance(val, (torch.Tensor,)):
-            # a batch of RGB(A)
-            if val.ndim > 3:
-                val = [t for t in val]
             # a batch of Grayscale
-            else:
+            if val.ndim == 2:
                 val = [t.unsqueeze(-1) for t in val]
+            val = [t for t in val]
             value_array.extend(val)
         elif isinstance(val, (list, tuple, set)):
             if isinstance(val, (tuple, set,)):
