@@ -55,3 +55,4 @@ def parse_reset(ident:str) -> int:
         return -1
     except Exception as e:
         logger.error(str(e))
+    return 0
