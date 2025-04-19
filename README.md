@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/04/19** @0.0.12:
+* absorb image io functions
+
 **2025/04/19** @0.0.11:
 * reduced convoluted logic for parsing tensors
 * contemplating removing mixlab support

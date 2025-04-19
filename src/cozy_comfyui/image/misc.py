@@ -58,58 +58,6 @@ def image_lerp(imageA: ImageType, imageB:ImageType, mask:ImageType=None,
     imageA = (imageA * 255).astype(imageA.dtype)
     return np.clip(imageA, 0, 255)
 
-def image_load(url: str) -> Tuple[ImageType, ...]:
-    if url.lower().startswith("http"):
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        img_array = np.asarray(bytearray(response.content), dtype=np.uint8)
-        img = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
-        img = image_normalize(img)
-        if img.ndim == 3:
-            if img.shape[2] == 4:
-                img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGRA)
-            else:
-                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        elif img.ndim < 3:
-            img = np.expand_dims(img, -1)
-    else:
-        try:
-            img = cv2.imread(url, cv2.IMREAD_UNCHANGED)
-            if img is None:
-                raise ValueError(f"{url} could not be loaded.")
-
-            img = image_normalize(img)
-            if img.ndim == 3:
-                if img.shape[2] == 4:
-                    img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGRA)
-                else:
-                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            elif img.ndim < 3:
-                img = np.expand_dims(img, -1)
-
-        except Exception:
-            try:
-                img = Image.open(url)
-                img = ImageOps.exif_transpose(img)
-                img = np.array(img)
-                if img.dtype != np.uint8:
-                    img = np.clip(np.array(img * 255), 0, 255).astype(dtype=np.uint8)
-            except Exception as e:
-                raise Exception(f"Error loading image: {e}")
-
-    if img is None:
-        raise Exception(f"No file found at {url}")
-
-    mask = image_mask(img)
-    """
-    if img.ndim == 3 and img.shape[2] == 4:
-        alpha = mask / 255.0
-        img[..., :3] = img[..., :3] * alpha[..., None]
-        img[:,:,3] = mask
-    """
-
-    return img, mask
-
 def image_minmax(image: List[ImageType]) -> Tuple[int, int, int, int]:
     h_min = w_min = 100000000000
     h_max = w_max = IMAGE_SIZE_MIN
