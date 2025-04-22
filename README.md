@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/04/19** @0.0.15:
+* realigned categories
+
 **2025/04/19** @0.0.14:
 * cleanedup all JS message functions
 

@@ -56,7 +56,6 @@ def load_module(root:str, name: str) -> None|ModuleType:
 def loader(root: str, pack: str, directory: str='',
            category: str="COZY COMFYUI ☕",
            rename: bool=True) -> Tuple[Dict[str, object], Dict[str, str]]:
-
     """
     rename will force the new name from the existing definition on the old node.
     Currently used to support older Jovimetrix nodes
@@ -91,14 +90,16 @@ def loader(root: str, pack: str, directory: str='',
 
         classes = inspect.getmembers(module, inspect.isclass)
         for class_name, class_object in classes:
-            if not class_name.endswith('BaseNode') and hasattr(class_object, 'NAME'): # and hasattr(class_object, 'CATEGORY'):
+            if not class_name.endswith('BaseNode') and hasattr(class_object, 'NAME'):
                 name = f"{class_object.NAME} ({pack})" if rename else class_object.NAME
                 NODE_DISPLAY_NAME_MAPPINGS[name] = name
                 NODE_CLASS_MAPPINGS[name] = class_object
                 desc = class_object.DESCRIPTION if hasattr(class_object, 'DESCRIPTION') else name
                 NODE_LIST_MAP[name] = desc.split('.')[0].strip('\n')
-                if not hasattr(class_object, 'CATEGORY'):
-                    class_object.CATEGORY = category
+                new_cat = category
+                if hasattr(class_object, 'CATEGORY'):
+                    new_cat = f"{new_cat}/{class_object.CATEGORY}"
+                class_object.CATEGORY = new_cat
 
     NODE_CLASS_MAPPINGS = {x[0] : x[1] for x in sorted(NODE_CLASS_MAPPINGS.items(),
                                                             key=lambda item: getattr(item[1], 'SORT', 0))}
