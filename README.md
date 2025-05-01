@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/01** @0.0.17:
+* vectors unified to just be float types
+
 **2025/04/30** @0.0.16:
 * better boolean conversion for widget defaults
 * deprecated COORD2D support
