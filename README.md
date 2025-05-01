@@ -1,6 +1,10 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/04/30** @0.0.16:
+* better boolean conversion for widget defaults
+* deprecated COORD2D support
+
 **2025/04/19** @0.0.15:
 * realigned categories
 

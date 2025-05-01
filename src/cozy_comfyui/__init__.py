@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.15"
+__version__ = "0.0.16"
 
 import os
 import sys
@@ -58,7 +58,7 @@ class EnumConvertType(Enum):
     VEC3INT = 35
     VEC4 = 40
     VEC4INT = 45
-    COORD2D = 22
+    #COORD2D = 22
     STRING = 0
     LIST = 2
     DICT = 3
@@ -172,8 +172,8 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
     if typ in [EnumConvertType.FLOAT, EnumConvertType.INT,
             EnumConvertType.VEC2, EnumConvertType.VEC2INT,
             EnumConvertType.VEC3, EnumConvertType.VEC3INT,
-            EnumConvertType.VEC4, EnumConvertType.VEC4INT,
-            EnumConvertType.COORD2D]:
+            EnumConvertType.VEC4, EnumConvertType.VEC4INT]:
+            #EnumConvertType.COORD2D]:
 
         if not isinstance(val, (list, tuple, torch.Tensor)):
             val = [val]
@@ -238,10 +238,14 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
         elif isinstance(new_val, (dict,)):
             new_val = len(new_val.keys()) > 0
         elif isinstance(new_val, (list, tuple,)) and len(new_val) > 0 and (nv := new_val[0]) is not None:
-            if isinstance(nv, (bool, str,)):
-                new_val = bool(nv)
+            if isinstance(nv, (str,)):
+                new_val = False if nv in ['', '0', '0.0', 'False', 'false'] else True
             elif isinstance(nv, (int, float,)):
                 new_val = nv > 0
+        elif isinstance(new_val, (str,)):
+            new_val = False if new_val in ['', '0', '0.0', 'False', 'false'] else True
+        elif isinstance(new_val, (int, float,)):
+            new_val = new_val > 0
     elif typ == EnumConvertType.LATENT:
         # covert image into latent
         if isinstance(new_val, (torch.Tensor,)):
@@ -271,8 +275,8 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
     elif issubclass(typ, Enum):
         new_val = typ[val]
 
-    if typ == EnumConvertType.COORD2D:
-        new_val = {'x': new_val[0], 'y': new_val[1]}
+    #if typ == EnumConvertType.COORD2D:
+    #    new_val = {'x': new_val[0], 'y': new_val[1]}
     return new_val
 
 def parse_param(data:dict, key:str, typ:EnumConvertType, default: Any,
