@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/02** @0.0.20:
+* EnumConvertType re-rodered for use in VALUE, LERP and OP BINARY nodes (Jovimetrix)
+
 **2025/05/01** @0.0.18:
 * EnumConvertType values reset to be parsable for VECTOR types
 

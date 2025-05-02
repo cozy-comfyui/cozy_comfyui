@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.18"
+__version__ = "0.0.20"
 
 import os
 import sys
@@ -49,21 +49,21 @@ IMAGE_SIZE_DEFAULT: int = 512
 # ==============================================================================
 
 class EnumConvertType(Enum):
-    STRING = 0
-    BOOLEAN = 1
+    BOOLEAN = 0
     INT = 10
     FLOAT = 12
     VEC2 = 20
-    VEC2INT = 25
     VEC3 = 30
-    VEC3INT = 35
     VEC4 = 40
+    VEC2INT = 25
+    VEC3INT = 35
     VEC4INT = 45
-    LIST = 50
-    DICT = 51
-    IMAGE = 60
-    LATENT = 61
-    MASK = 62
+    STRING = 50
+    LIST = 60
+    DICT = 65
+    IMAGE = 70
+    MASK = 75
+    LATENT = 80
     ANY = 70
 
 """
