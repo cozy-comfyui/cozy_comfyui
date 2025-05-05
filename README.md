@@ -1,6 +1,10 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/05** @0.0.21:
+* remove force cache refreshes
+* migrate Lexicon into cozy
+
 **2025/05/02** @0.0.20:
 * EnumConvertType re-rodered for use in VALUE, LERP and OP BINARY nodes (Jovimetrix)
 

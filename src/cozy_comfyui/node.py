@@ -99,6 +99,8 @@ def loader(root: str, pack: str, directory: str='',
 
         classes = inspect.getmembers(module, inspect.isclass)
         for class_name, class_object in classes:
+            if class_name.endswith("Lexicon"):
+                continue
             if not class_name.endswith('BaseNode') and hasattr(class_object, 'NAME'):
                 name = f"{class_object.NAME} ({pack})" if rename else class_object.NAME
                 NODE_DISPLAY_NAME_MAPPINGS[name] = name
@@ -141,17 +143,17 @@ class Singleton(type):
 
 class CozyBaseNode:
     INPUT_IS_LIST = True
-    NOT_IDEMPOTENT = True
+    # NOT_IDEMPOTENT = True
     RETURN_TYPES = ()
     FUNCTION = "run"
 
-    @classmethod
-    def IS_CHANGED(cls, **kw) -> float:
-        return float('nan')
+    #@classmethod
+    #def IS_CHANGED(cls, **kw) -> float:
+    #    return float('nan')
 
-    @classmethod
-    def VALIDATE_INPUTS(cls, input_types) -> bool:
-        return True
+    #@classmethod
+    #def VALIDATE_INPUTS(cls, input_types) -> bool:
+    #    return True
 
     @classmethod
     def INPUT_TYPES(cls, prompt:bool=False, extra_png:bool=False, dynprompt:bool=False) -> Dict[str, str]:
