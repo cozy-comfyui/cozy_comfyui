@@ -166,6 +166,7 @@ class Lexicon(metaclass=LexiconMeta):
     PAUSE = "pause", "Pause"
     PERSPECTIVE = "perspective", "Perspective"
     PHASE = "phase", "Phase"
+    PINGPONG = "pingpong", "Reverse the action when it reaches the loop point"
     PIVOT = "pivot", "Pivot"
     PIXEL = "image", "Pixel Data (RGBA, RGB or Grayscale)"
     PIXEL_A = "image_a", "Pixel Data (RGBA, RGB or Grayscale)"
