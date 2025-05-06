@@ -1,6 +1,7 @@
 aenum
 aiohttp
 loguru
+numba
 numpy<2
 opencv-contrib-python
 Pillow
