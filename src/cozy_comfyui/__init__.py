@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.23"
+__version__ = "0.0.24"
 
 import os
 import sys
@@ -274,6 +274,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
             new_val[1,:,:] = color[1]
             new_val[2,:,:] = color[2]
             new_val[3,:,:] = color[3]
+
     elif typ == EnumConvertType.MASK:
         # @TODO: FIX FOR MULTI-CHAN?
         if not isinstance(new_val, (torch.Tensor,)):
@@ -281,6 +282,9 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
             color = torch.tensor(color, dtype=torch.int32).tolist()
             new_val = torch.empty((IMAGE_SIZE_MIN, IMAGE_SIZE_MIN, 1), dtype=torch.uint8)
             new_val[0,:,:] = color
+        else:
+            if len(new_val.shape) == 2:
+                new_val = 1.0 - new_val
 
     elif issubclass(typ, Enum):
         new_val = typ[val]

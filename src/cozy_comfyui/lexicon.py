@@ -121,6 +121,7 @@ class Lexicon(metaclass=LexiconMeta):
     IN_B = "b", "Input B"
     INDEX = "index", "Current item index in the Queue list"
     INT = "int", "Integer"
+    INPUT = "input", "Automatically conform the inputs"
     INVERT = "invert", "Invert the output"
     IO = "io", "File I/O"
     JUSTIFY = "justify", "How to align the text to the side margins of the canvas: Left, Right, or Centered"
