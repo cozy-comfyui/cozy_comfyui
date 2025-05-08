@@ -43,6 +43,8 @@ def norm_l2(value: np.ndarray) -> np.ndarray:
     return value / np.linalg.norm(value)
 
 def norm_op(op: EnumNormalize, value: np.ndarray) -> np.ndarray:
+    if len(value) < 2:
+        return value
     op = op.name.lower()
     if (func := getattr(MODULE, f"norm_{op}", None)) is None:
         raise Exception(f"Bad Operator: {op.name}")

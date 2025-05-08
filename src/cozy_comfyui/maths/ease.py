@@ -24,33 +24,11 @@ MODULE = inspect.getmodule(inspect.currentframe())
 # ==============================================================================
 
 class EnumEase(Enum):
-    QUAD_IN = 10
-    QUAD_OUT = 11
-    QUAD_IN_OUT = 12
+    LINEAR = 0
 
-    CUBIC_IN = 20
-    CUBIC_OUT = 21
-    CUBIC_IN_OUT = 22
-
-    QUARTIC_IN = 30
-    QUARTIC_OUT = 31
-    QUARTIC_IN_OUT = 32
-
-    QUINTIC_IN = 40
-    QUINTIC_OUT = 41
-    QUINTIC_IN_OUT = 42
-
-    SIN_IN = 50
-    SIN_OUT = 51
-    SIN_IN_OUT = 52
-
-    CIRCULAR_IN = 60
-    CIRCULAR_OUT = 61
-    CIRCULAR_IN_OUT = 62
-
-    EXPONENTIAL_IN = 70
-    EXPONENTIAL_OUT = 71
-    EXPONENTIAL_IN_OUT = 72
+    BOUNCE_IN = 100
+    BOUNCE_OUT = 101
+    BOUNCE_IN_OUT = 102
 
     ELASTIC_IN = 80
     ELASTIC_OUT = 81
@@ -60,13 +38,41 @@ class EnumEase(Enum):
     BACK_OUT = 91
     BACK_IN_OUT = 92
 
-    BOUNCE_IN = 100
-    BOUNCE_OUT = 101
-    BOUNCE_IN_OUT = 102
+    SIN_IN = 50
+    SIN_OUT = 51
+    SIN_IN_OUT = 52
+
+    CUBIC_IN = 20
+    CUBIC_OUT = 21
+    CUBIC_IN_OUT = 22
+
+    QUAD_IN = 10
+    QUAD_OUT = 11
+    QUAD_IN_OUT = 12
+
+    QUARTIC_IN = 30
+    QUARTIC_OUT = 31
+    QUARTIC_IN_OUT = 32
+
+    QUINTIC_IN = 40
+    QUINTIC_OUT = 41
+    QUINTIC_IN_OUT = 42
+
+    CIRCULAR_IN = 60
+    CIRCULAR_OUT = 61
+    CIRCULAR_IN_OUT = 62
+
+    EXPONENTIAL_IN = 70
+    EXPONENTIAL_OUT = 71
+    EXPONENTIAL_IN_OUT = 72
 
 # ==============================================================================
 # === SUPPORT ===
 # ==============================================================================
+
+@jit(nopython=True, cache=True)
+def ease_linear(t: TYPE_NUMBER) -> TYPE_NUMBER:
+    return t
 
 @jit(nopython=True, cache=True)
 def ease_quad_in(t: TYPE_NUMBER) -> TYPE_NUMBER:
@@ -199,9 +205,8 @@ def ease_bounce_out(t: np.ndarray) -> np.ndarray:
 def ease_bounce_in_out(t: np.ndarray) -> np.ndarray:
     return np.where(t < 0.5, 0.5 * ease_bounce_in(t * 2), 0.5 * ease_bounce_out(t * 2 - 1) + 0.5)
 
-def ease_op(op: EnumEase,
-            start: float=0, end: float=1, duration: float=1,
-            alpha: float=1., clip: tuple[int, int]=(0, 1)) -> np.ndarray:
+def ease_simple(op: EnumEase, start: float=0, end: float=1, duration: float=1,
+            alpha: np.ndarray = np.linspace(0, 1, 100), clip: tuple[int, int]=(0, 1)) -> np.ndarray:
     """
     Compute eased values.
 
@@ -210,16 +215,58 @@ def ease_op(op: EnumEase,
         start (float): Starting value.
         end (float): Ending value.
         duration (float): Duration of the easing.
-        alpha (float): Alpha values.
+        alpha (np.ndarray): Alpha values.
         clip (tuple[int, int]): Clip range.
 
     Returns:
-        TYPE_NUMBER: Eased value(s)
+        np.ndarray: Eased value(s)
     """
     if (func := getattr(MODULE, f"ease_{op.name.lower()}", None)) is None:
         raise Exception(f"Bad Operator: {op.name}")
+
     t = clip[0] * (1 - alpha) + clip[1] * alpha
     duration = max(min(duration, 1), 0)
     t /= duration
     a = func(t)
     return end * a + start * (1 - a)
+
+def ease_op(op: EnumEase,
+            values: np.ndarray,
+            steps: int,
+            clip: tuple[float, float] = (0, 1),
+            duration: float = 1.0) -> np.ndarray:
+    """
+    Applies easing across a set of values using a chosen easing function.
+
+    Parameters:
+        op (EnumEase): Easing function to use.
+        values (np.ndarray): The values to ease through.
+        steps (int): Number of output steps (interpolated points).
+        clip (tuple[float, float]): Clip range for easing curve.
+        duration (float): Normalized duration (default 1.0).
+
+    Returns:
+        np.ndarray: Eased values interpolated from the original values.
+    """
+
+    if (func := getattr(MODULE, f"ease_{op.name.lower()}", None)) is None:
+        raise Exception(f"Bad Operator: {op.name}")
+
+    # Normalized time samples (0..1), remapped by clip and duration
+    alpha = np.linspace(0, 1, steps)
+    t = clip[0] * (1 - alpha) + clip[1] * alpha
+    t /= max(min(duration, 1), 1e-8)
+
+    eased = func(t)  # eased alpha
+
+    # Map eased alpha to float indices into `values`
+    indices = eased * (len(values) - 1)
+    lower = np.floor(indices).astype(int)
+    upper = np.ceil(indices).astype(int)
+    frac = indices - lower
+
+    # Clamp to valid range
+    lower = np.clip(lower, 0, len(values) - 1)
+    upper = np.clip(upper, 0, len(values) - 1)
+
+    return values[lower] * (1 - frac) + values[upper] * frac

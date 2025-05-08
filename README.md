@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/05** @0.0.23:
+* lexicon updates
+
 **2025/05/05** @0.0.22:
 * migrated maths functions
 

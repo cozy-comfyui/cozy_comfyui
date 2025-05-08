@@ -1,12 +1,13 @@
 """ Maths Easing Function Support """
 
-import numpy as np
+from typing import List
 
-def seriesLinear(start=0.0, step=1.0, count=10, loop=None, pingpong=False):
+def seriesLinear(start=0.0, step=1.0, count=10, loop=None, pingpong=False) -> List[float]:
     result = []
 
     # Calculate how many steps in each loop
-    loop_size = loop if loop is not None else count
+    count = max(1, count)
+    loop_size = loop or count
 
     for i in range(count):
         # Calculate which step within the loop we're at
@@ -49,7 +50,4 @@ def seriesLinear(start=0.0, step=1.0, count=10, loop=None, pingpong=False):
             current = start + loop_position * step
         result.append(current)
 
-    data = np.array(result)
-    linear = 2 * ((data - data.min()) / (data.max() - data.min())) - 1
-
-    return result, linear
+    return result
