@@ -1,7 +1,7 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
-**2025/05/05** @0.0.24:
+**2025/05/08** @0.0.24:
 * adjusted for masks being inverted
 * new LEXICON `INPUT`
 
