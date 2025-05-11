@@ -26,7 +26,6 @@ Coord2D_Float: TypeAlias = Tuple[float, float]
 Coord3D_Float: TypeAlias = Tuple[float, float, float]
 
 ImageType: TypeAlias = np.ndarray
-ImageType: TypeAlias = np.ndarray
 PixelType: TypeAlias = Union[int, float, RGB_Int, RGBA_Int, RGB_Float, RGBA_Float]
 
 # ==============================================================================

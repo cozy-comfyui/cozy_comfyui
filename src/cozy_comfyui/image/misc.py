@@ -1,13 +1,12 @@
 """Image processing support module for handling various image formats and conversions."""
 
+import sys
 from enum import Enum
 from typing import List, Tuple
 
 import cv2
 import torch
-import requests
 import numpy as np
-from PIL import Image, ImageOps
 
 from .. import \
     IMAGE_SIZE_MIN, \
@@ -16,24 +15,63 @@ from .. import \
 from . import \
     ImageType
 
-from .convert import image_mask
-
 # ==============================================================================
 # === ENUMERATION ===
 # ==============================================================================
 
-class EnumInterpolation(Enum):
-    NEAREST = cv2.INTER_NEAREST
-    LINEAR = cv2.INTER_LINEAR
-    CUBIC = cv2.INTER_CUBIC
-    AREA = cv2.INTER_AREA
-    LANCZOS4 = cv2.INTER_LANCZOS4
-    LINEAR_EXACT = cv2.INTER_LINEAR_EXACT
-    NEAREST_EXACT = cv2.INTER_NEAREST_EXACT
+class EnumImageBySize(Enum):
+    LARGEST = 10
+    SMALLEST = 20
+    WIDTH_MIN = 30
+    WIDTH_MAX = 40
+    HEIGHT_MIN = 50
+    HEIGHT_MAX = 60
 
 # ==============================================================================
 # === SUPPPORT ===
 # ==============================================================================
+
+def image_by_size(image_list: List[ImageType],
+                  enumSize: EnumImageBySize=EnumImageBySize.LARGEST) -> tuple[ImageType, int, int]:
+
+    img = None
+    mega, width, height = 0, 0, 0
+    if enumSize in [EnumImageBySize.SMALLEST, EnumImageBySize.WIDTH_MIN, EnumImageBySize.HEIGHT_MIN]:
+        mega, width, height = sys.maxsize, sys.maxsize, sys.maxsize
+
+    for i in image_list:
+        h, w = i.shape[:2]
+        match enumSize:
+            case EnumImageBySize.LARGEST:
+                if (new_mega := w * h) > mega:
+                    mega = new_mega
+                    img = i
+                width = max(width, w)
+                height = max(height, h)
+            case EnumImageBySize.SMALLEST:
+                if (new_mega := w * h) < mega:
+                    mega = new_mega
+                    img = i
+                width = min(width, w)
+                height = min(height, h)
+            case EnumImageBySize.WIDTH_MIN:
+                if w < width:
+                    width = w
+                    img = i
+            case EnumImageBySize.WIDTH_MAX:
+                if w > width:
+                    width = w
+                    img = i
+            case EnumImageBySize.HEIGHT_MIN:
+                if h < height:
+                    height = h
+                    img = i
+            case EnumImageBySize.HEIGHT_MAX:
+                if h > height:
+                    height = h
+                    img = i
+
+    return img, width, height
 
 def image_lerp(imageA: ImageType, imageB:ImageType, mask:ImageType=None,
                alpha:float=1.) -> ImageType:
@@ -81,9 +119,6 @@ def image_normalize(image: ImageType) -> ImageType:
         return np.zeros_like(image)
     image = (image - img_min) / (img_max - img_min)
     return (image * 255).astype(np.uint8)
-
-def image_resize(image: ImageType, width: int, height: int, sample: EnumInterpolation) -> ImageType:
-    return cv2.resize(image, (width, height), interpolation=sample)
 
 def image_stack(images: List[ImageType] ) -> RGBAMaskType:
     return [torch.stack(i) for i in zip(*images)]
