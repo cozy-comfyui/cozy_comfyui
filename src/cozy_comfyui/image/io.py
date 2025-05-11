@@ -14,14 +14,14 @@ from .. import \
 from . import \
     ImageType
 
+from .compose import \
+    image_mask
+
 from .convert import \
     pil_to_cv
 
 from .misc import \
     image_normalize
-
-from .mask import \
-    image_mask
 
 # ==============================================================================
 # === SUPPPORT ===

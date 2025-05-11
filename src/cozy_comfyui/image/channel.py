@@ -18,10 +18,8 @@ from .convert import \
 
 from .compose import \
     EnumScaleMode, \
-    image_scalefit
+    image_scalefit, image_matte
 
-from .mask import \
-    image_matte
 
 from .pixel import \
     pixel_eval
