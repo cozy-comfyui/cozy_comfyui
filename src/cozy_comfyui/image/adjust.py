@@ -13,7 +13,7 @@ from . import \
     ImageType
 
 from .convert import \
-    cv_to_tensor, tensor_to_cv
+    cv_to_tensor, tensor_to_cv, image_convert
 
 # ==============================================================================
 # === ENUMERATION ===
@@ -34,20 +34,17 @@ class EnumThresholdAdapt(Enum):
 # ==============================================================================
 
 def image_brightness(image: ImageType, brightness: float=0):
+    brightness = np.clip(brightness, -1, 1) * 255
+    if brightness > 0:
+        shadow = brightness
+        highlight = 255
+    else:
+        shadow = 0
+        highlight = 255 + brightness
+    alpha_b = (highlight - shadow)/255
+    gamma_b = shadow
 
-    if brightness != 0:
-        brightness = np.clip(brightness, -1, 1) * 255
-        if brightness > 0:
-            shadow = brightness
-            highlight = 255
-        else:
-            shadow = 0
-            highlight = 255 + brightness
-        alpha_b = (highlight - shadow)/255
-        gamma_b = shadow
-
-        image = cv2.addWeighted(image, alpha_b, image, 0, gamma_b)
-    return image
+    return cv2.addWeighted(image, alpha_b, image, 0, gamma_b)
 
 def image_contrast(image: ImageType, contrast: float) -> ImageType:
     # Map contrast from [-255, 255] to factor
@@ -99,10 +96,10 @@ def image_emboss(image: ImageType, amount: float=1., kernel: int=2) -> ImageType
     return cv2.filter2D(src=image, ddepth=-1, kernel=kernel)
 
 def image_equalize(image:ImageType) -> ImageType:
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    image = cv2.equalizeHist(image)
-    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    return image
+    image = image_convert(image, 3)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    image[:, :, 0] = cv2.equalizeHist(image[:, :, 0])
+    return cv2.cvtColor(image, cv2.COLOR_YUV2RGB)
 
 def image_exposure(image: ImageType, value: float) -> ImageType:
     return np.clip(image * value, 0, 255).astype(np.uint8)
@@ -221,10 +218,9 @@ def image_invert(image: ImageType, value: float) -> ImageType:
     inverted = 255 - image
     return ((1 - value) * image + value * inverted).astype(np.uint8)
 
-def image_pixelate(image: ImageType, amount:float=1.)-> ImageType:
-
+def image_pixelate(image: ImageType, amount:float)-> ImageType:
     h, w = image.shape[:2]
-    amount = max(0, min(1, amount))
+    amount = max(0, min(1, amount / float(max(w, h))))
     block_size_h = max(1, (h * amount))
     block_size_w = max(1, (w * amount))
     num_blocks_h = int(np.ceil(h / block_size_h))
@@ -249,11 +245,19 @@ def image_pixelate(image: ImageType, amount:float=1.)-> ImageType:
 
     return pixelated_image.astype(np.uint8)
 
+def image_pixelscale(image: ImageType, amount:int)-> ImageType:
+    height, width = image.shape[:2]
+    amount = max(1, max(width, height) - amount)
+    # amount = max(1, min(amount, max(width, height)))
+    w, h = (amount, amount)
+    temp = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
+    return cv2.resize(temp, (width, height), interpolation=cv2.INTER_NEAREST)
+
 def image_posterize(image: ImageType, levels:int=256) -> ImageType:
     divisor = 256 / max(2, min(256, levels))
     return (np.floor(image / divisor) * int(divisor)).astype(np.uint8)
 
-def image_quantize(image:ImageType, levels:int=256, iterations:int=10,
+def image_quantize(image:ImageType, levels:int=256, iterations:int=5,
                    epsilon:float=0.2) -> ImageType:
     levels = int(max(2, min(256, levels)))
     pixels = np.float32(image)

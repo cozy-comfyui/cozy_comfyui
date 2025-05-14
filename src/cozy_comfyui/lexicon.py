@@ -46,6 +46,7 @@ class Lexicon(metaclass=LexiconMeta):
     BOOLEAN = "bool", "Boolean"
     BOTTOM = "bottom", "Bottom"
     BPM = "bpm", "The number of Beats Per Minute"
+    BRIGHTNESS = "brightness", "How bight"
     C1 = "c1", "Color Scheme Result 1"
     C2 = "c2", "Color Scheme Result 2"
     C3 = "c3", "Color Scheme Result 3"
