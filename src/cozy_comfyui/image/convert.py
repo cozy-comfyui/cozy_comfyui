@@ -169,6 +169,14 @@ def pil_to_tensor(image: Image.Image) -> TensorType:
     image = np.array(image).astype(np.float32) / 255.0
     return torch.from_numpy(image).unsqueeze(0)
 
+def srgb_to_linear(img):
+    img = img / 255.0
+    return np.where(img <= 0.04045, img / 12.92, ((img + 0.055) / 1.055) ** 2.4)
+
+def linear_to_srgb(img):
+    img = np.clip(img, 0, 1)
+    return np.where(img <= 0.0031308, img * 12.92, 1.055 * (img ** (1 / 2.4)) - 0.055)
+
 def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=None) -> ImageType:
     """
     Convert a torch Tensor (HWC or HW, float32 in [0, 1]) to a NumPy uint8 image array.

@@ -13,7 +13,7 @@ from . import \
     ImageType
 
 from .convert import \
-    cv_to_tensor, tensor_to_cv, image_convert
+    cv_to_tensor, tensor_to_cv, image_convert, srgb_to_linear, linear_to_srgb
 
 # ==============================================================================
 # === ENUMERATION ===
@@ -102,7 +102,10 @@ def image_equalize(image:ImageType) -> ImageType:
     return cv2.cvtColor(image, cv2.COLOR_YUV2RGB)
 
 def image_exposure(image: ImageType, value: float) -> ImageType:
-    return np.clip(image * value, 0, 255).astype(np.uint8)
+    linear = srgb_to_linear(image.astype(np.float32))
+    exposed = linear * (2.0 ** value)
+    srgb = linear_to_srgb(exposed)
+    return np.clip(srgb * 255, 0, 255).astype(np.uint8)
 
 def image_filter(image:ImageType, start:tuple[int]=(128,128,128),
                  end:tuple[int]=(128,128,128), fuzz:tuple[float]=(0.5,0.5,0.5),
