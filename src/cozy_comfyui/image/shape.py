@@ -14,8 +14,8 @@ from . import \
 class EnumShapes(Enum):
     CIRCLE = 0
     SQUARE = 1
-    ELLIPSE = 2
-    RECTANGLE = 3
+    #ELLIPSE = 2
+    #RECTANGLE = 3
     POLYGON = 4
 
 # ==============================================================================

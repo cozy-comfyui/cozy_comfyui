@@ -97,13 +97,76 @@ def image_grayscale(image: ImageType, use_alpha: bool=False) -> ImageType:
     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     return np.expand_dims(image, axis=-1)
 
+def image_mask(image: ImageType, color: int=255) -> ImageType:
+    """Get the alpha mask from the image, if any, otherwise return one based on color value.
+
+    Args:
+        image: Input image, assumed to be 2D or 3D (with or without alpha channel).
+        color: Value to fill the mask (default is 255).
+
+    Returns:
+        ImageType: Mask of the image, either the alpha channel or a full mask of the given color.
+    """
+    if image.ndim == 3 and image.shape[2] == 4:
+        return image[..., 3]
+
+    h, w = image.shape[:2]
+    return np.ones((h, w), dtype=np.uint8) * color
+
+def image_mask_add(image:ImageType, mask:ImageType=None, alpha:float=255) -> ImageType:
+    """Put custom mask into an image. If there is no mask, alpha is applied.
+    Images are expanded to 4 channels.
+    Existing 4 channel images with no mask input just return themselves.
+    """
+    image = image_convert(image, 4)
+    mask = image_mask(image, alpha) if mask is None else image_convert(mask, 1)
+    h, w, c = image.shape
+    mask = cv2.resize(mask, (w, h))
+    image[..., 3] = mask if mask.ndim == 2 else mask[:, :, 0]
+    return image
+
+def image_mask_binary(image: ImageType) -> ImageType:
+    """Convert an image to a binary mask where non-black pixels are 1 and black pixels are 0.
+    Supports BGR, single-channel grayscale, and RGBA images.
+
+    Args:
+        image (ImageType): Input image in BGR, grayscale, or RGBA format.
+
+    Returns:
+        ImageType: Binary mask with the same width and height as the input image, where
+                    pixels are 1 for non-black and 0 for black.
+    """
+    if image.ndim == 2:
+        # Grayscale image
+        gray = image
+    elif image.shape[2] == 3:
+        # BGR image
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    elif image.shape[2] == 4:
+        # RGBA image
+        alpha_channel = image[..., 3]
+        # Create a mask from the alpha channel where alpha > 0
+        alpha_mask = alpha_channel > 0
+        # Convert RGB to grayscale
+        gray = cv2.cvtColor(image[:, :, :3], cv2.COLOR_BGR2GRAY)
+        # Apply the alpha mask to the grayscale image
+        gray = cv2.bitwise_and(gray, gray, mask=alpha_mask.astype(np.uint8))
+    else:
+        raise ValueError("Unsupported image format")
+
+    # Create a binary mask where any non-black pixel is set to 1
+    _, mask = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)
+    if mask.ndim == 2:
+        mask = np.expand_dims(mask, -1)
+    return mask.astype(np.uint8)
+
 def b64_to_tensor(base64str: str) -> TensorType:
     img = base64.b64decode(base64str)
     img = Image.open(BytesIO(img))
     img = ImageOps.exif_transpose(img)
     return pil_to_tensor(img)
 
-def b64_to_pil(base64_string):
+def b64_to_pil(base64_string: str):
     prefix, base64_data = base64_string.split(",", 1)
     image_data = base64.b64decode(base64_data)
     image_stream = BytesIO(image_data)
@@ -119,7 +182,6 @@ def b64_to_cv(base64_string) -> ImageType:
 
 def cv_to_pil(image: ImageType) -> Image.Image:
     """Convert a CV2 image to a PIL Image."""
-    print("cv", image.shape)
     if image.ndim > 2:
         cc = image.shape[2]
         if cc == 3:

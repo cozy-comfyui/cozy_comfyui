@@ -16,10 +16,10 @@ from . import \
 
 from .compose import \
     EnumBlendType, \
-    image_blend, image_mask, image_mask_add
+    image_blend
 
 from .convert import \
-    image_convert, image_grayscale
+    image_convert, image_grayscale, image_mask, image_mask_add
 
 from .pixel import \
     pixel_hsv_adjust

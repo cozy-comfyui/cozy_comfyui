@@ -6,14 +6,12 @@ import cv2
 import torch
 import numpy as np
 
-from .. import \
-    TensorType
-
 from . import \
     ImageType
 
 from .convert import \
-    cv_to_tensor, tensor_to_cv, image_convert, srgb_to_linear, linear_to_srgb
+    cv_to_tensor, tensor_to_cv, image_convert, srgb_to_linear, \
+    linear_to_srgb, image_mask, image_mask_add
 
 # ==============================================================================
 # === ENUMERATION ===
@@ -24,6 +22,14 @@ class EnumAdjustBlur(Enum):
     STACK_BLUR = 20
     GAUSSIAN_BLUR = 30
     MEDIAN_BLUR = 40
+
+class EnumAdjustColor(Enum):
+    RGB = 10 #
+    HSV = 20 # -180, 1, 1
+    YUV = 30 # 1 1 1
+    LAB = 40 # 100, -128, 127
+    LUV = 50 #
+    XYZ = 60 # 100, 100, 100
 
 class EnumAdjustEdge(Enum):
     OUTLINE = 20
@@ -82,6 +88,64 @@ def image_brightness(image: ImageType, brightness: float=0):
         highlight = 255 + brightness
     alpha_b = (highlight - shadow) / 255
     return cv2.addWeighted(image, alpha_b, image, 0, shadow)
+
+def image_color(image: ImageType, op: EnumAdjustColor=EnumAdjustColor.RGB,
+                a: float=0, b: float=0, c: float=0) -> ImageType:
+
+    alpha = image_mask(image) if image.shape[2] == 4 else None
+    image = image_convert(image, 3)
+    a = np.clip(a, -1, 1)
+    b = np.clip(b, -1, 1)
+    c = np.clip(c, -1, 1)
+
+    match op:
+        # -255, 255
+        case EnumAdjustColor.RGB:
+            adj = np.array([a * 255, b * 255, c * 255])
+            image = np.clip(image.astype(np.float32) + adj, 0, 255).astype(np.uint8)
+
+        # -180, 1, 1
+        case EnumAdjustColor.HSV:
+            hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV).astype(np.float32)
+            hsv[..., 0] = (hsv[..., 0] + a * 180) % 180  # Hue wrap
+            hsv[..., 1] = np.clip(hsv[..., 1] + b * 255, 0, 255)
+            hsv[..., 2] = np.clip(hsv[..., 2] + c * 255, 0, 255)
+            image = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB)
+
+        # 1 1 1
+        case EnumAdjustColor.YUV:
+            yuv = cv2.cvtColor(image, cv2.COLOR_RGB2YUV).astype(np.float32)
+            yuv[..., 0] = np.clip(yuv[..., 0] + a * 100, 0, 255)
+            yuv[..., 1] = np.clip(yuv[..., 1] + b * 100, 0, 255)
+            yuv[..., 2] = np.clip(yuv[..., 2] + c * 100, 0, 255)
+            image = cv2.cvtColor(yuv.astype(np.uint8), cv2.COLOR_YUV2RGB)
+
+        # 100, -128, 127
+        case EnumAdjustColor.LAB:
+            lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB).astype(np.float32)
+            lab[..., 0] = np.clip(lab[..., 0] + a * 100, 0, 100)
+            lab[..., 1] = np.clip(lab[..., 1] + b * 127, -128, 127)
+            lab[..., 2] = np.clip(lab[..., 2] + c * 127, -128, 127)
+            image = cv2.cvtColor(lab.astype(np.uint8), cv2.COLOR_LAB2RGB)
+
+        case EnumAdjustColor.LUV:
+            luv = cv2.cvtColor(image, cv2.COLOR_RGB2LUV).astype(np.float32)
+            luv[..., 0] = np.clip(luv[..., 0] + a * 100, 0, 100)
+            luv[..., 1] = np.clip(luv[..., 1] + b * 150, 0, 255)
+            luv[..., 2] = np.clip(luv[..., 2] + c * 150, 0, 255)
+            image = cv2.cvtColor(luv.astype(np.uint8), cv2.COLOR_LUV2RGB)
+
+        # 100, 100, 100
+        case EnumAdjustColor.XYZ:
+            xyz = cv2.cvtColor(image, cv2.COLOR_RGB2XYZ).astype(np.float32)
+            xyz[..., 0] = np.clip(xyz[..., 0] + a * 100, 0, 255)
+            xyz[..., 1] = np.clip(xyz[..., 1] + b * 100, 0, 255)
+            xyz[..., 2] = np.clip(xyz[..., 2] + c * 100, 0, 255)
+            image = cv2.cvtColor(xyz.astype(np.uint8), cv2.COLOR_XYZ2RGB)
+
+    if alpha is not None:
+        image = image_mask_add(image, alpha)
+    return image
 
 def image_contrast(image: ImageType, contrast: float) -> ImageType:
     # Map contrast from [-255, 255] to factor

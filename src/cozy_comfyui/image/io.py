@@ -14,11 +14,8 @@ from .. import \
 from . import \
     ImageType
 
-from .compose import \
-    image_mask
-
 from .convert import \
-    pil_to_cv
+    pil_to_cv, image_mask
 
 from .misc import \
     image_normalize
