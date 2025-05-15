@@ -57,8 +57,8 @@ def image_convert(image: ImageType, channels: int,
 
     # Resize if width or height is specified
     h, w = image.shape[:2]
-    new_width = width if width == 0 else w
-    new_height = height if height == 0 else h
+    new_width = width if width > 0 else w
+    new_height = height if height > 0 else h
     if (new_width, new_height) != (w, h):
         # Create a new image with the matte color
         new_image = np.full((new_height, new_width, channels), matte[:channels], dtype=image.dtype)

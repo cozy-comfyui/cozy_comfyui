@@ -80,10 +80,8 @@ def image_brightness(image: ImageType, brightness: float=0):
     else:
         shadow = 0
         highlight = 255 + brightness
-    alpha_b = (highlight - shadow)/255
-    gamma_b = shadow
-
-    return cv2.addWeighted(image, alpha_b, image, 0, gamma_b)
+    alpha_b = (highlight - shadow) / 255
+    return cv2.addWeighted(image, alpha_b, image, 0, shadow)
 
 def image_contrast(image: ImageType, contrast: float) -> ImageType:
     # Map contrast from [-255, 255] to factor
@@ -371,13 +369,12 @@ def image_morphology(image: ImageType, op: EnumAdjustMorpho=EnumAdjustMorpho.DIL
 
 def image_pixelate(image: ImageType, amount:float)-> ImageType:
     h, w = image.shape[:2]
-    amount = max(0, min(1, amount / float(max(w, h))))
-    block_size_h = max(1, (h * amount))
-    block_size_w = max(1, (w * amount))
+    block_size_h = max(1, int(h * amount))
+    block_size_w = max(1, int(w * amount))
     num_blocks_h = int(np.ceil(h / block_size_h))
     num_blocks_w = int(np.ceil(w / block_size_w))
-    block_size_h = h // num_blocks_h
-    block_size_w = w // num_blocks_w
+    #block_size_h = h // num_blocks_h
+    #block_size_w = w // num_blocks_w
     pixelated_image = image.copy()
 
     for i in range(num_blocks_h):
@@ -387,47 +384,49 @@ def image_pixelate(image: ImageType, amount:float)-> ImageType:
             y_end = min((i + 1) * block_size_h, h)
             x_start = j * block_size_w
             x_end = min((j + 1) * block_size_w, w)
-
-            # Average color values within the block
             block_average = np.mean(image[y_start:y_end, x_start:x_end], axis=(0, 1))
-
-            # Fill the block with the average color
             pixelated_image[y_start:y_end, x_start:x_end] = block_average
 
     return pixelated_image.astype(np.uint8)
 
-def image_pixelscale(image: ImageType, amount:int)-> ImageType:
+def image_pixelscale(image: ImageType, amount:float)-> ImageType:
     height, width = image.shape[:2]
-    amount = max(1, max(width, height) - amount)
-    # amount = max(1, min(amount, max(width, height)))
-    w, h = (amount, amount)
-    temp = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
+    amount = min(1, max(0, 1. - amount))
+    w = max(1, width * amount)
+    h = max(1, height * amount)
+    amount = max(1, int(max(w, h)))
+    temp = cv2.resize(image, (amount, amount), interpolation=cv2.INTER_LINEAR)
     return cv2.resize(temp, (width, height), interpolation=cv2.INTER_NEAREST)
 
-def image_posterize(image: ImageType, levels:int=256) -> ImageType:
-    divisor = 256 / max(2, min(256, levels))
+def image_posterize(image: ImageType, amount:float) -> ImageType:
+    levels = min(1, max(0, 1.0 - amount)) * 255
+    divisor = 256 / max(1, min(255, levels))
     return (np.floor(image / divisor) * int(divisor)).astype(np.uint8)
 
-def image_quantize(image:ImageType, levels:int=256, iterations:int=5,
+def image_quantize(image:ImageType, amount:float, iterations:int=5,
                    epsilon:float=0.2) -> ImageType:
-    levels = int(max(2, min(256, levels)))
+
+    levels = min(1, max(0, 1.0 - amount)) * 255
+    levels = int(max(1, min(255, levels)))
     pixels = np.float32(image)
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, iterations, epsilon)
     _, labels, centers = cv2.kmeans(pixels, levels, None, criteria, 5, cv2.KMEANS_RANDOM_CENTERS)
     centers = np.uint8(centers)
     return centers[labels.flatten()].reshape(image.shape)
 
-def image_sharpen(image:ImageType, amount:float=1., kernel: int=3,
+def image_sharpen(image:ImageType, amount:float=0., kernel: int=3,
                   sigma:float=0.5, threshold:float=0) -> ImageType:
     """Return a sharpened version of the image, using an unsharp mask."""
     if kernel and kernel % 2 == 0:
         kernel += 1
+    amount = max(0, min(255, 255 * amount))
     blurred = cv2.GaussianBlur(image, (kernel, kernel), sigma)
     sharpened = float(amount + 1) * image - float(amount) * blurred
     sharpened = np.maximum(sharpened, np.zeros(sharpened.shape))
     sharpened = np.minimum(sharpened, 255 * np.ones(sharpened.shape))
     sharpened = sharpened.round().astype(np.uint8)
     if threshold > 0:
+        threshold = max(0, min(255, 255 * threshold))
         low_contrast_mask = np.absolute(image - blurred) < threshold
         np.copyto(sharpened, image, where=low_contrast_mask)
     return sharpened
