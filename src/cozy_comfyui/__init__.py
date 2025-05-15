@@ -17,7 +17,7 @@ import torch
 
 TensorType: TypeAlias = torch.Tensor
 RGBAMaskType: TypeAlias = Tuple[TensorType, ...]
-InputType: TypeAlias = Dict[str, Tuple[str|List[str], Dict[str, Any]]]
+InputType: TypeAlias = Dict[str, Any]
 
 # ==============================================================================
 # === CONSTANT ===
@@ -84,7 +84,7 @@ class EnumConvertType(Enum):
 # === SUPPORT ===
 # ==============================================================================
 
-def deep_merge(d1: dict, d2: dict) -> Dict[str, str]:
+def deep_merge(d1: InputType, d2: InputType) -> InputType:
     """
     Deep merge multiple dictionaries recursively.
 
@@ -111,7 +111,7 @@ def load_file(fname: str) -> str | None:
     except Exception as e:
         logger.error(e)
 
-def parse_dynamic(data:dict, prefix:str, typ:EnumConvertType, default: Any) -> List[Any]:
+def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: Any) -> List[Any]:
     """Convert iterated input field(s) based on a s into a single compound list of entries.
 
     The default will just look for all keys as integer:
@@ -121,7 +121,7 @@ def parse_dynamic(data:dict, prefix:str, typ:EnumConvertType, default: Any) -> L
     This will return N entries in a list based on the prefix pattern or not.
 
     """
-    vals = []
+    vals: List[Any] = []
     fail = 0
     keys = data.keys()
     for i in range(100):
@@ -141,9 +141,9 @@ def parse_dynamic(data:dict, prefix:str, typ:EnumConvertType, default: Any) -> L
 
     return vals
 
-def parse_value(val:Any, typ:EnumConvertType, default: Any,
+def parse_value(val: Any, typ: EnumConvertType, default: Any,
                 clip_min: Optional[float]=None, clip_max: Optional[float]=None,
-                zero:int=0) -> List[Any]:
+                zero: int=0) -> List[Any]|None:
     """Convert target value into the new specified type."""
 
     if typ == EnumConvertType.ANY:
@@ -178,7 +178,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
         cc = val.shape[2] if len(val.shape) > 2 else 1
         val = (w, h, cc)
 
-    new_val = val
+    new_val: Any = val
     if typ in [EnumConvertType.FLOAT, EnumConvertType.INT,
             EnumConvertType.VEC2, EnumConvertType.VEC2INT,
             EnumConvertType.VEC3, EnumConvertType.VEC3INT,
@@ -191,6 +191,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
         size = max(1, int(typ.value / 10))
         new_val = []
         for idx in range(size):
+            d: Any = default
             try:
                 d = default[idx] if idx < len(default) else 0
             except:
@@ -199,7 +200,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
                 except:
                     d = default
 
-            v = d if val is None else val[idx] if idx < len(val) else d
+            v: Any = d if val is None else val[idx] if idx < len(val) else d
             if isinstance(v, (str, )):
                 v = v.strip('\n').strip()
                 if v == '':
@@ -276,15 +277,19 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
             new_val[3,:,:] = color[3]
 
     elif typ == EnumConvertType.MASK:
-        # @TODO: FIX FOR MULTI-CHAN?
         if not isinstance(new_val, (torch.Tensor,)):
             color = parse_value(new_val, EnumConvertType.INT, 0, 0, 255)
             color = torch.tensor(color, dtype=torch.int32).tolist()
             new_val = torch.empty((IMAGE_SIZE_MIN, IMAGE_SIZE_MIN, 1), dtype=torch.uint8)
             new_val[0,:,:] = color
         else:
-            if len(new_val.shape) == 2:
+            # if the incomming image is RGB/RGBA, we leave it alone
+            # if it is greyscale (a mask) we should invert for "alpha"
+            pass
+            '''
+            if new_val.ndim == 2 or new_val.shape[2] == 1:
                 new_val = 1.0 - new_val
+            '''
 
     elif issubclass(typ, Enum):
         new_val = typ[val]
@@ -293,7 +298,7 @@ def parse_value(val:Any, typ:EnumConvertType, default: Any,
     #    new_val = {'x': new_val[0], 'y': new_val[1]}
     return new_val
 
-def parse_param(data:dict, key:str, typ:EnumConvertType, default: Any,
+def parse_param(data:InputType, key:str, typ:EnumConvertType, default: Any,
                 clip_min: Optional[float]=None, clip_max: Optional[float]=None,
                 zero:int=0) -> List[Any]:
     """Convenience because of the dictionary parameters."""
@@ -311,7 +316,7 @@ def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
     if not isinstance(values, (list,)):
         values = [values]
 
-    value_array = []
+    value_array: List[Any] = []
     for val in values:
         if isinstance(val, (str,)):
             try: val = json.loads(val.replace("'", '"'))

@@ -20,7 +20,7 @@ from . import \
 # ==============================================================================
 
 def image_convert(image: ImageType, channels: int,
-                  width: int=None, height: int=None,
+                  width: int=0, height: int=0,
                   matte: RGBA_Int=(0, 0, 0, 255)) -> ImageType:
     """Force image format to a specific number of channels.
     Args:
@@ -57,8 +57,8 @@ def image_convert(image: ImageType, channels: int,
 
     # Resize if width or height is specified
     h, w = image.shape[:2]
-    new_width = width if width is not None else w
-    new_height = height if height is not None else h
+    new_width = width if width == 0 else w
+    new_height = height if height == 0 else h
     if (new_width, new_height) != (w, h):
         # Create a new image with the matte color
         new_image = np.full((new_height, new_width, channels), matte[:channels], dtype=image.dtype)
@@ -134,11 +134,13 @@ def cv_to_tensor(image: ImageType, grayscale: bool=False) -> TensorType:
     """Convert a CV2 image to a torch tensor, with handling for grayscale/mask."""
     if image.ndim < 3:
         image = np.expand_dims(image, -1)
+
     if grayscale:
         if image.shape[2] == 4:
             image = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
         elif image.shape[2] == 3:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+
         image = np.squeeze(image, axis=-1)
 
     image = image.astype(np.float32) / 255.0
@@ -166,18 +168,18 @@ def pil_to_cv(image: Image.Image) -> ImageType:
 
 def pil_to_tensor(image: Image.Image) -> TensorType:
     """Convert a PIL Image to a Torch Tensor."""
-    image = np.array(image).astype(np.float32) / 255.0
-    return torch.from_numpy(image).unsqueeze(0)
+    image_array = np.array(image).astype(np.float32) / 255.0
+    return torch.from_numpy(image_array).unsqueeze(0)
 
-def srgb_to_linear(img):
+def srgb_to_linear(img: ImageType) -> ImageType:
     img = img / 255.0
     return np.where(img <= 0.04045, img / 12.92, ((img + 0.055) / 1.055) ** 2.4)
 
-def linear_to_srgb(img):
+def linear_to_srgb(img: ImageType) -> ImageType:
     img = np.clip(img, 0, 1)
     return np.where(img <= 0.0031308, img * 12.92, 1.055 * (img ** (1 / 2.4)) - 0.055)
 
-def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=None) -> ImageType:
+def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=0) -> ImageType:
     """
     Convert a torch Tensor (HWC or HW, float32 in [0, 1]) to a NumPy uint8 image array.
 
@@ -207,7 +209,7 @@ def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=None) -> Imag
             tensor = 1.0 - tensor
 
     image = np.clip(tensor.cpu().numpy() * 255, 0, 255).astype(np.uint8)
-    if chan is not None:
+    if chan > 0:
         image = image_convert(image, chan)
     return image
 

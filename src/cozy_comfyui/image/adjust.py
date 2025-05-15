@@ -19,6 +19,28 @@ from .convert import \
 # === ENUMERATION ===
 # ==============================================================================
 
+class EnumAdjustBlur(Enum):
+    BLUR = 10
+    STACK_BLUR = 20
+    GAUSSIAN_BLUR = 30
+    MEDIAN_BLUR = 40
+
+class EnumAdjustEdge(Enum):
+    OUTLINE = 20
+    CANNY  = 30
+    LAPLACIAN = 40
+    SOBEL = 50
+    PREWITT = 60
+    SCHARR = 70
+
+class EnumAdjustMorpho(Enum):
+    DILATE = 10
+    ERODE = 20
+    OPEN = 30
+    CLOSE = 40
+    TOPHAT = 50
+    BLACKHAT = 60
+
 class EnumThreshold(Enum):
     BINARY = cv2.THRESH_BINARY
     TRUNC = cv2.THRESH_TRUNC
@@ -32,6 +54,23 @@ class EnumThresholdAdapt(Enum):
 # ==============================================================================
 # === SUPPORT ===
 # ==============================================================================
+
+def image_blur(image: ImageType, op: EnumAdjustBlur=EnumAdjustBlur.BLUR, kernel: int=1, sigmaX: float=0, sigmaY: float=0) -> ImageType:
+    if kernel % 2 == 0:
+        kernel += 1
+
+    match op:
+        case EnumAdjustBlur.BLUR:
+            return cv2.blur(image, (kernel, kernel))
+
+        case EnumAdjustBlur.STACK_BLUR:
+            return cv2.stackBlur(image, (kernel, kernel))
+
+        case EnumAdjustBlur.GAUSSIAN_BLUR:
+            return cv2.GaussianBlur(image, (kernel, kernel), sigmaX=sigmaX, sigmaY=sigmaY)
+
+        case EnumAdjustBlur.MEDIAN_BLUR:
+            return cv2.medianBlur(image, kernel)
 
 def image_brightness(image: ImageType, brightness: float=0):
     brightness = np.clip(brightness, -1, 1) * 255
@@ -75,25 +114,107 @@ def image_contrast(image: ImageType, contrast: float) -> ImageType:
     rgb = image_contrast_rgb(rgb)
     return np.concatenate([rgb, alpha], axis=2)
 
-def image_edge_detect(image: ImageType,
-                    ksize: int=3,
-                    low: float=0.27,
-                    high:float=0.6) -> ImageType:
+def image_edge(image: ImageType, op: EnumAdjustEdge=EnumAdjustEdge.CANNY,
+               kernel: int=1, iterations: int=1,
+               lo: float=0, hi: float=1.) -> ImageType:
 
-    #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    ksize = max(3, ksize)
-    image = cv2.GaussianBlur(src=image, ksize=(ksize, ksize+2), sigmaX=0.5)
-    # Perform Canny edge detection
-    return cv2.Canny(image, int(low * 255), int(high * 255))
+    if kernel % 2 == 0:
+        kernel += 1
 
-def image_emboss(image: ImageType, amount: float=1., kernel: int=2) -> ImageType:
-    kernel = max(2, kernel)
+    match op:
+        case EnumAdjustEdge.OUTLINE:
+            kernel = max(3, kernel)
+            return cv2.morphologyEx(image, cv2.MORPH_GRADIENT,
+                                    kernel=cv2.getStructuringElement(cv2.MORPH_RECT, (kernel, kernel)),
+                                    iterations=iterations)
+
+        case EnumAdjustEdge.CANNY:
+            image = cv2.GaussianBlur(image, (kernel, kernel), sigmaX=0.5)
+            lo = int(np.clip(lo * 255, 0, 255))
+            hi = int(np.clip(hi * 255, 0, 255))
+            return cv2.Canny(image, threshold1=lo, threshold2=hi)
+
+        case EnumAdjustEdge.LAPLACIAN:
+            kernel = min(31, kernel)
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) == 3 else image
+            lap = cv2.Laplacian(gray, ddepth=cv2.CV_64F, ksize=kernel)
+            return cv2.convertScaleAbs(lap)
+
+        case EnumAdjustEdge.SOBEL:
+            kernel = min(31, kernel)
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) == 3 else image
+            sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=kernel)
+            sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=kernel)
+            sobel = cv2.magnitude(sobelx, sobely)
+            return cv2.convertScaleAbs(sobel)
+
+        case EnumAdjustEdge.PREWITT:
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) == 3 else image
+            # Custom Prewitt kernels
+            kernelx = np.array([[kernel, 0, -kernel], [kernel, 0, -kernel], [kernel, 0, -kernel]])
+            kernely = np.array([[kernel, kernel, kernel], [0, 0, 0], [-kernel, -kernel, -kernel]])
+            prewittx = cv2.filter2D(gray, -1, kernelx)
+            prewitty = cv2.filter2D(gray, -1, kernely)
+            prewitt = cv2.magnitude(prewittx.astype(np.float32), prewitty.astype(np.float32))
+            return cv2.convertScaleAbs(prewitt)
+
+        case EnumAdjustEdge.SCHARR:
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) == 3 else image
+            scharrx = cv2.Scharr(gray, cv2.CV_64F, 1, 0, scale=kernel)
+            scharry = cv2.Scharr(gray, cv2.CV_64F, 0, 1, scale=kernel)
+            scharr = cv2.magnitude(scharrx, scharry)
+            return cv2.convertScaleAbs(scharr)
+
+'''
+def image_emboss(image: ImageType, amount: float=1., kernel: int=0) -> ImageType:
+    kernel = max(0, kernel)
+    if kernel % 2 == 0:
+        kernel += 1
     kernel = np.array([
         [-kernel,   -kernel+1,    0],
         [-kernel+1,   kernel-1,     1],
         [kernel-2,    kernel-1,     2]
     ]) * amount
     return cv2.filter2D(src=image, ddepth=-1, kernel=kernel)
+'''
+
+def image_emboss(image: ImageType, azimuth: float=-45.0, elevation: float=45.0,
+                 depth: float=10.0) -> ImageType:
+    """
+    Apply emboss effect to an image with a specified light angle.
+
+    Args:
+        azimuth: Direction of light in degrees (0° = right, 90° = down, 180° = left, 270° = up)
+        elevation: Direction of light in degrees (0° = head on, 90° = top down)
+        depth: Thickness
+
+    Returns:
+        Embossed image.
+    """
+    image = image.astype('float')
+    image = image_convert(image, 3)
+    grad_x, grad_y, grad_z = np.gradient(image)
+
+    # length of projection of ray on ground plane
+    azimuth = np.radians(azimuth-90)
+    elevation = np.radians(elevation)
+    gd = np.cos(elevation)
+    dx = gd * np.cos(azimuth)
+    dy = gd * np.sin(azimuth)
+    dz = np.sin(elevation)
+
+    # depth
+    grad_x = grad_x * depth / 100.
+    grad_y = grad_y * depth / 100.
+    #grad_z = grad_z * depth / 100.
+
+    # finding the unit normal vectors for the image
+    leng = np.sqrt(grad_x**2 + grad_y**2 + 1.)
+    uni_x = grad_x / leng
+    uni_y = grad_y / leng
+    uni_z = 1. / leng
+    image = 255 * (dx * uni_x + dy * uni_y + dz * uni_z)
+    return image.clip(0, 255).astype('uint8')
 
 def image_equalize(image:ImageType) -> ImageType:
     image = image_convert(image, 3)
@@ -107,8 +228,8 @@ def image_exposure(image: ImageType, value: float) -> ImageType:
     srgb = linear_to_srgb(exposed)
     return np.clip(srgb * 255, 0, 255).astype(np.uint8)
 
-def image_filter(image:ImageType, start:tuple[int]=(128,128,128),
-                 end:tuple[int]=(128,128,128), fuzz:tuple[float]=(0.5,0.5,0.5),
+def image_filter(image:ImageType, start:tuple[int, ...]=(128,128,128),
+                 end:tuple[int, ...]=(128,128,128), fuzz:tuple[float, ...]=(0.5,0.5,0.5),
                  use_range:bool=False) -> tuple[ImageType, ImageType]:
     """Filter an image based on a range threshold.
     It can use a start point with fuzziness factor and/or a start and end point with fuzziness on both points.
@@ -134,15 +255,15 @@ def image_filter(image:ImageType, start:tuple[int]=(128,128,128),
             new_image = new_image.unsqueeze(-1)
         new_image = torch.repeat_interleave(new_image, 3, dim=2)
 
-    fuzz = TensorType(fuzz, dtype=torch.float64, device="cpu")
-    start = TensorType(start, dtype=torch.float64, device="cpu") / 255.
-    end = TensorType(end, dtype=torch.float64, device="cpu") / 255.
+    fuzz = torch.Tensor(fuzz, dtype=torch.float64, device="cpu")
+    start_tensor = torch.Tensor(start, dtype=torch.float64, device="cpu") / 255.
+    end_tensor = torch.Tensor(end, dtype=torch.float64, device="cpu") / 255.
     if not use_range:
-        end = start
-    start -= fuzz
-    end += fuzz
-    start = torch.clamp(start, 0.0, 1.0)
-    end = torch.clamp(end, 0.0, 1.0)
+        end_tensor = start_tensor
+    start_tensor -= fuzz
+    end_tensor += fuzz
+    start = torch.clamp(start_tensor, 0.0, 1.0)
+    end = torch.clamp(end_tensor, 0.0, 1.0)
 
     mask = ((new_image[..., 0] > start[0]) & (new_image[..., 0] < end[0]))
     #mask |= ((new_image[..., 1] > start[1]) & (new_image[..., 1] < end[1]))
@@ -221,6 +342,33 @@ def image_invert(image: ImageType, value: float) -> ImageType:
     inverted = 255 - image
     return ((1 - value) * image + value * inverted).astype(np.uint8)
 
+def image_morphology(image: ImageType, op: EnumAdjustMorpho=EnumAdjustMorpho.DILATE,
+               kernel_size: int=3, iterations: int=1) -> ImageType:
+
+    if kernel_size % 2 == 0:
+        kernel_size += 1
+
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+
+    match op:
+        case EnumAdjustMorpho.DILATE:
+            return cv2.dilate(image, kernel, iterations=iterations)
+
+        case EnumAdjustMorpho.ERODE:
+            return cv2.erode(image, kernel, iterations=iterations)
+
+        case EnumAdjustMorpho.OPEN:
+            return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=iterations)
+
+        case EnumAdjustMorpho.CLOSE:
+            return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel, iterations=iterations)
+
+        case EnumAdjustMorpho.TOPHAT:
+            return cv2.morphologyEx(image, cv2.MORPH_TOPHAT, kernel, iterations=iterations)
+
+        case EnumAdjustMorpho.BLACKHAT:
+            return cv2.morphologyEx(image, cv2.MORPH_BLACKHAT, kernel, iterations=iterations)
+
 def image_pixelate(image: ImageType, amount:float)-> ImageType:
     h, w = image.shape[:2]
     amount = max(0, min(1, amount / float(max(w, h))))
@@ -269,12 +417,12 @@ def image_quantize(image:ImageType, levels:int=256, iterations:int=5,
     centers = np.uint8(centers)
     return centers[labels.flatten()].reshape(image.shape)
 
-def image_sharpen(image:ImageType, kernel_size=None, sigma:float=1.0,
-                amount:float=1.0, threshold:float=0) -> ImageType:
+def image_sharpen(image:ImageType, amount:float=1., kernel: int=3,
+                  sigma:float=0.5, threshold:float=0) -> ImageType:
     """Return a sharpened version of the image, using an unsharp mask."""
-
-    kernel_size = (kernel_size, kernel_size) if kernel_size else (5, 5)
-    blurred = cv2.GaussianBlur(image, kernel_size, sigma)
+    if kernel and kernel % 2 == 0:
+        kernel += 1
+    blurred = cv2.GaussianBlur(image, (kernel, kernel), sigma)
     sharpened = float(amount + 1) * image - float(amount) * blurred
     sharpened = np.maximum(sharpened, np.zeros(sharpened.shape))
     sharpened = np.minimum(sharpened, 255 * np.ones(sharpened.shape))

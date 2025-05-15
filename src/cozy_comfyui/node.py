@@ -6,10 +6,11 @@ import inspect
 import importlib
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, List
 
 from cozy_comfyui import \
     COZY_INTERNAL, \
+    InputType, \
     logger
 
 # ==============================================================================
@@ -62,7 +63,7 @@ def load_module(root:str, name: str) -> None|ModuleType:
         logger.warning(f"module failed {module}")
         logger.warning(str(e))
 
-def loader(root: str, pack: str, directory: str='',
+def loader(root_str: str, pack: str, directory: str='',
            category: str="COZY COMFYUI ☕",
            rename: bool=True) -> Tuple[Dict[str, object], Dict[str, str]]:
     """
@@ -75,7 +76,7 @@ def loader(root: str, pack: str, directory: str='',
     NODE_LIST_MAP = {}
 
     # package core root
-    root = Path(root)
+    root = Path(root_str)
     root_str = str(root).replace("\\", "/")
     core = str(root.parent)
     sys.path.append(core)
@@ -113,7 +114,7 @@ def loader(root: str, pack: str, directory: str='',
                 class_object.CATEGORY = new_cat
 
     NODE_CLASS_MAPPINGS = {x[0] : x[1] for x in sorted(NODE_CLASS_MAPPINGS.items(),
-                                                            key=lambda item: getattr(item[1], 'SORT', 0))}
+                                                       key=lambda item: getattr(item[1], 'SORT', 0))}
 
     keys = NODE_CLASS_MAPPINGS.keys()
     #for name in keys:
@@ -157,7 +158,7 @@ class CozyBaseNode:
 
     @classmethod
     def INPUT_TYPES(cls, prompt:bool=False, extra_png:bool=False, dynprompt:bool=False) -> Dict[str, str]:
-        data = {
+        data: InputType = {
             "required": {},
             "hidden": {
                 "ident": "UNIQUE_ID"

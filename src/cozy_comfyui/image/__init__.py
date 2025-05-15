@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from typing import List, Tuple, TypeAlias, Union
+from typing import Any, List, Tuple, TypeAlias, Union
 
 import numpy as np
 from PIL import Image
@@ -25,7 +25,7 @@ Coord3D_Int: TypeAlias = Tuple[int, int, int]
 Coord2D_Float: TypeAlias = Tuple[float, float]
 Coord3D_Float: TypeAlias = Tuple[float, float, float]
 
-ImageType: TypeAlias = np.ndarray
+ImageType: TypeAlias = np.ndarray[Any, np.dtype[Any]]
 PixelType: TypeAlias = Union[int, float, RGB_Int, RGBA_Int, RGB_Float, RGBA_Float]
 
 # ==============================================================================
