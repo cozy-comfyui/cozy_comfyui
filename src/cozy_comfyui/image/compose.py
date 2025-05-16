@@ -211,15 +211,14 @@ def image_flatten(image: List[ImageType], width:int=None, height:int=None,
         width = width or w
         height = height or h
 
-    current = np.zeros((height, width, 3), dtype=np.uint8)
-    current = image_mask_add(current)
+    current = np.zeros((height, width, 4), dtype=np.uint8)
+    # current = image_mask_add(current, alpha=0)
     for x in image:
         if mode != EnumScaleMode.MATTE and mode != EnumScaleMode.RESIZE_MATTE:
             x = image_scalefit(x, width, height, mode, sample)
         x = image_matte(x, (0,0,0,0), width, height)
         x = image_scalefit(x, width, height, EnumScaleMode.CROP, sample)
         x = image_convert(x, 4)
-        #@TODO: ADD VARIOUS COMP OPS?
         current = cv2.add(current, x)
     return current
 
@@ -425,6 +424,9 @@ def image_scalefit(image: ImageType, width: int, height:int,
             image = cv2.resize(image, None, fx=ratio, fy=ratio, interpolation=sample.value)
 
         case EnumScaleMode.CROP:
+            h, w = image.shape[:2]
+            if h<height or w<width:
+                image = image_scalefit(image, width, height, EnumScaleMode.RESIZE_MATTE, sample, matte)
             image = image_crop_center(image, width, height)
 
         case EnumScaleMode.FIT:

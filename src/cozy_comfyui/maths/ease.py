@@ -24,7 +24,8 @@ MODULE = inspect.getmodule(inspect.currentframe())
 # ==============================================================================
 
 class EnumEase(Enum):
-    LINEAR = 0
+    NONE = 0
+    LINEAR = 50
 
     BOUNCE_IN = 100
     BOUNCE_OUT = 101

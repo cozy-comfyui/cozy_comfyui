@@ -238,7 +238,10 @@ def parse_value(val: Any, typ: EnumConvertType, default: Any,
         except Exception as e:
             logger.exception(e)
     elif typ == EnumConvertType.LIST:
-        new_val = list(new_val)
+        if isinstance(new_val, (str, list, int, float,)):
+            new_val = [new_val]
+        else:
+            new_val = list(new_val)
     elif typ == EnumConvertType.STRING:
         if isinstance(new_val, (str, list, int, float,)):
             new_val = [new_val]
