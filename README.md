@@ -1,6 +1,13 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/16** @0.0.25:
+* equalize, brightness, pixelate, pixelscale
+* migrated bulk of Jovimetrix image library
+* list conversion updates
+* flatten fix
+* ease NONE type
+
 **2025/05/08** @0.0.24:
 * adjusted for masks being inverted
 * new LEXICON `INPUT`

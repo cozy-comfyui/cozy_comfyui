@@ -1,8 +1,13 @@
 aenum
 aiohttp
+blendmodes
+daltonlens
 loguru
+matplotlib
 numba
 numpy<2
 opencv-contrib-python
 Pillow
 requests
+scikit-image
+scikit-learn

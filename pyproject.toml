@@ -12,11 +12,17 @@ requires-python = ">=3.11"
 dependencies = [
     "aenum>=3.1.15",
     "aiohttp",
+    "blendmodes",
+    "daltonlens",
     "loguru",
+    "matplotlib",
+    "numba",
     "numpy<2",
     "opencv-contrib-python",
     "Pillow",
-    "requests"
+    "requests",
+    "scikit-image",
+    "scikit-learn"
 ]
 
 [build-system]
