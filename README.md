@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/16** @0.0.26:
+* fixed double loads
+
 **2025/05/16** @0.0.25:
 * equalize, brightness, pixelate, pixelscale
 * migrated bulk of Jovimetrix image library

@@ -6,7 +6,7 @@ import inspect
 import importlib
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Tuple, List
+from typing import Any, Dict, Tuple
 
 from cozy_comfyui import \
     COZY_INTERNAL, \
@@ -43,6 +43,12 @@ COZY_TYPE_IMG     = "IMAGE,BOOLEAN,FLOAT,INT,VEC2,VEC3,VEC4,MASK"
 COZY_TYPE_MASK    = "MASK,BOOLEAN,FLOAT,INT,VEC2,VEC3,VEC4,IMAGE"
 
 # ==============================================================================
+# === GLOBAL ===
+# ==============================================================================
+
+_LOADED = {}
+
+# ==============================================================================
 # === SUPPORT ===
 # ==============================================================================
 
@@ -57,8 +63,13 @@ def load_module(root:str, name: str) -> None|ModuleType:
         logger.warning(str(e))
         return
 
+    if (lib := _LOADED.get(module, None)) is not None:
+        return lib
+
     try:
-        return importlib.import_module(module)
+        lib = importlib.import_module(module)
+        _LOADED[module] = lib
+        return lib
     except Exception as e:
         logger.warning(f"module failed {module}")
         logger.warning(str(e))
@@ -110,15 +121,17 @@ def loader(root_str: str, pack: str, directory: str='',
                 NODE_LIST_MAP[name] = desc.split('.')[0].strip('\n')
                 new_cat = category
                 if hasattr(class_object, 'CATEGORY'):
-                    new_cat = f"{new_cat}/{class_object.CATEGORY}"
+                    if class_object.CATEGORY.startswith(new_cat):
+                        new_cat = class_object.CATEGORY
+                    else:
+                        new_cat = f"{new_cat}/{class_object.CATEGORY}"
+
                 class_object.CATEGORY = new_cat
 
     NODE_CLASS_MAPPINGS = {x[0] : x[1] for x in sorted(NODE_CLASS_MAPPINGS.items(),
                                                        key=lambda item: getattr(item[1], 'SORT', 0))}
 
     keys = NODE_CLASS_MAPPINGS.keys()
-    #for name in keys:
-    #    logger.debug(f"✅ {name}")
     logger.info(f"{pack} {len(keys)} nodes loaded")
 
     # only do the list on local runs...
@@ -144,17 +157,8 @@ class Singleton(type):
 
 class CozyBaseNode:
     INPUT_IS_LIST = True
-    # NOT_IDEMPOTENT = True
     RETURN_TYPES = ()
     FUNCTION = "run"
-
-    #@classmethod
-    #def IS_CHANGED(cls, **kw) -> float:
-    #    return float('nan')
-
-    #@classmethod
-    #def VALIDATE_INPUTS(cls, input_types) -> bool:
-    #    return True
 
     @classmethod
     def INPUT_TYPES(cls, prompt:bool=False, extra_png:bool=False, dynprompt:bool=False) -> Dict[str, str]:

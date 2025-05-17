@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.25"
+__version__ = "0.0.26"
 
 import os
 import sys
@@ -65,20 +65,6 @@ class EnumConvertType(Enum):
     MASK = 75
     LATENT = 80
     ANY = 70
-
-"""
-class EnumConvertType(Enum):
-    COORD2D = 22
-    LIST = 2
-    DICT = 3
-    IMAGE = 4
-    LATENT = 5
-    # ENUM = 6
-    ANY = 9
-    MASK = 7
-    # MIXLAB LAYER
-    LAYER = 8
-"""
 
 # ==============================================================================
 # === SUPPORT ===
