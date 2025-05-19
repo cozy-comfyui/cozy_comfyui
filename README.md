@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/18** @0.0.27:
+* fall thru for tooltips to use their Lexicon entry if none provided
+
 **2025/05/16** @0.0.26:
 * fixed double loads
 

@@ -271,6 +271,8 @@ class Lexicon(metaclass=LexiconMeta):
                     continue
                 if (tip := widget_data.get("tooltip", None)):
                     continue
+                if (tip := cls._tooltipsDB.get(k, None)) is None:
+                    continue
                 widget_data["tooltip"] = tip
                 node[cat][k] = (v[0], widget_data)
         return node
