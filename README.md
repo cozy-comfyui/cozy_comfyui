@@ -1,6 +1,10 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/25** @0.0.28:
+* loosened restriction for python 3.11+ to allow for 3.10+
+* * I make zero guarantee that will actually let 3.10 work and I will not support 3.10
+
 **2025/05/18** @0.0.27:
 * fall thru for tooltips to use their Lexicon entry if none provided
 
