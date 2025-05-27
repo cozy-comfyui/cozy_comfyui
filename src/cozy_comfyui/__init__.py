@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.28"
+__version__ = "0.0.29"
 
 import os
 import sys
@@ -129,7 +129,7 @@ def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: A
 
 def parse_value(val: Any, typ: EnumConvertType, default: Any,
                 clip_min: Optional[float]=None, clip_max: Optional[float]=None,
-                zero: int=0) -> List[Any]|None:
+                zero: float=0.) -> List[Any]|None:
     """Convert target value into the new specified type."""
 
     if typ == EnumConvertType.ANY:
@@ -174,6 +174,20 @@ def parse_value(val: Any, typ: EnumConvertType, default: Any,
         if not isinstance(val, (list, tuple, torch.Tensor)):
             val = [val]
 
+        if clip_min is None:
+            if typ in [EnumConvertType.FLOAT, EnumConvertType.VEC2,
+                       EnumConvertType.VEC3, EnumConvertType.VEC4]:
+                clip_min = -sys.float_info.max
+            else:
+                clip_min = -sys.maxsize
+
+        if clip_max is None:
+            if typ in [EnumConvertType.FLOAT, EnumConvertType.VEC2,
+                       EnumConvertType.VEC3, EnumConvertType.VEC4]:
+                clip_max = sys.float_info.max
+            else:
+                clip_max = sys.maxsize
+
         size = max(1, int(typ.value / 10))
         new_val = []
         for idx in range(size):
@@ -197,10 +211,6 @@ def parse_value(val: Any, typ: EnumConvertType, default: Any,
                     v = round(float(v or 0), 16)
                 else:
                     v = int(v)
-                if clip_min is not None:
-                    v = max(v, clip_min)
-                if clip_max is not None:
-                    v = min(v, clip_max)
             except Exception as e:
                 logger.exception(e)
                 logger.error(f"Error converting value: {val} -- {v}")
@@ -208,6 +218,9 @@ def parse_value(val: Any, typ: EnumConvertType, default: Any,
 
             if v == 0:
                 v = zero
+
+            v =  max(clip_min, min(v, clip_max))
+
             new_val.append(v)
         new_val = new_val[0] if size == 1 else tuple(new_val)
     elif typ == EnumConvertType.DICT:
