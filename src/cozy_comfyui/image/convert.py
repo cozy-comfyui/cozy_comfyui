@@ -251,14 +251,14 @@ def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=0) -> ImageTy
     - Optionally forces the image to have 1, 3, or 4 channels.
 
     Args:
-        tensor (TensorType): Image tensor with shape (H, W), (H, W, 1), or (H, W, 3).
+        tensor (TensorType): Image tensor with shape (B, H, W), (B, H, W, 1), or (B, H, W, 3).
         invert (bool): If True, invert the image.
         chan (int, optional): Force the image to have 1, 3, or 4 channels.
 
     Returns:
         ImageType: NumPy array with shape (H, W, C) and dtype uint8.
     """
-    if tensor.ndim > 3:
+    if tensor.shape[0] > 1:
         raise Exception("Tensor is batch of tensors")
 
     if tensor.ndim < 3:

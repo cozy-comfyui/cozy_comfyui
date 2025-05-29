@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/29** @0.0.30:
+* fixed bug in tensors being read as a batch when only a single tensor
+
 **2025/05/27** @0.0.29:
 * optimize numerical checks for clip min/max
 
