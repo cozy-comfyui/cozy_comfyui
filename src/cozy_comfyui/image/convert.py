@@ -243,7 +243,7 @@ def linear_to_srgb(img: ImageType) -> ImageType:
 
 def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=0) -> ImageType:
     """
-    Convert a torch Tensor (BHWC or BHW, float32 in [0, 1]) to a NumPy uint8 image array.
+    Convert a torch Tensor (HWC or HW, float32 in [0, 1]) to a NumPy uint8 image array.
 
     - Adds a channel dimension for grayscale images if missing.
     - Optionally inverts the image (1.0 becomes 0.0 and vice versa).
@@ -251,7 +251,7 @@ def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=0) -> ImageTy
     - Optionally forces the image to have 1, 3, or 4 channels.
 
     Args:
-        tensor (TensorType): Image tensor with shape (B, H, W), (B, H, W, 1), or (B, H, W, 3).
+        tensor (TensorType): Image tensor with shape (H, W), (H, W, 1), or (H, W, 3).
         invert (bool): If True, invert the image.
         chan (int, optional): Force the image to have 1, 3, or 4 channels.
 
@@ -259,13 +259,11 @@ def tensor_to_cv(tensor: TensorType, invert: bool=False, chan: int=0) -> ImageTy
         ImageType: NumPy array with shape (H, W, C) and dtype uint8.
     """
     tensor = tensor.detach().cpu().float()
-    if tensor.ndim == 2:  # [H, W] ==> BHWC
-        tensor = tensor.unsqueeze(0).unsqueeze(-1)
+    if tensor.ndim == 2:  # [H, W] ==> HWC
+        tensor = tensor.unsqueeze(-1)
 
-    if tensor.shape[0] > 1:
+    if tensor.ndim > 3:
         raise Exception("Tensor is batch of tensors")
-
-    tensor = tensor[0]
 
     if invert:
         if tensor.shape[2] == 4:

@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.31"
+__version__ = "0.0.32"
 
 import os
 import sys
@@ -354,7 +354,7 @@ def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
             value_array.append(val)
         elif isinstance(val, (torch.Tensor,)):
             # a batch of Grayscale
-            if val.ndim == 2:
+            if val.ndim == 3:
                 val = [t.unsqueeze(-1) for t in val]
             val = [t for t in val]
             value_array.extend(val)

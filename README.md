@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/29** @0.0.32:
+* single tensors read as single tensors
+
 **2025/05/29** @0.0.31:
 * fixed bug in tensors being read as a batch when only a single tensor
 
