@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/05/31** @0.0.33:
+* patch around data returned in widgets waiting for ComfyUI PR 8127
+
 **2025/05/29** @0.0.32:
 * single tensors read as single tensors
 

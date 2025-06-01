@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.32"
+__version__ = "0.0.33"
 
 import os
 import sys
@@ -157,6 +157,9 @@ def parse_value(val: Any, typ: EnumConvertType, default: Any,
         # wacky color struct?
         elif 'r' in val:
             val = [val.get(c, 0) for c in 'rgba']
+        elif '__value__' in val:
+            val = val['__value__']
+
     elif isinstance(val, torch.Tensor) and typ not in [EnumConvertType.IMAGE,
                                                        EnumConvertType.MASK,
                                                        EnumConvertType.LATENT]:
