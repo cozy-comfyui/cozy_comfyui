@@ -22,49 +22,63 @@ from . import \
 def image_convert(image: ImageType, channels: int,
                   width: int=0, height: int=0,
                   matte: RGBA_Int=(0, 0, 0, 255)) -> ImageType:
-    """Force image format to a specific number of channels.
+    """Force image format and optionally resize with alpha-masked padding.
+
     Args:
         image (ImageType): Input image.
         channels (int): Desired number of channels (1, 3, or 4).
-        width (int): Desired width. `None` means leave unchanged.
-        height (int): Desired height. `None` means leave unchanged.
-        matte (tuple): RGBA color to use as background color for transparent areas.
+        width (int): Output width.
+        height (int): Output height.
+        matte (tuple): RGBA color for matte/padding areas.
     Returns:
-        ImageType: Image with the specified number of channels.
+        ImageType: Converted image.
     """
     if image.ndim == 2:
         image = np.expand_dims(image, axis=-1)
 
-    if (cc := image.shape[2]) != channels:
-        if   cc == 1 and channels == 3:
-            image = np.repeat(image, 3, axis=2)
-        elif cc == 1 and channels == 4:
-            rgb = np.repeat(image, 3, axis=2)
-            alpha = np.full(image.shape[:2] + (1,), matte[3], dtype=image.dtype)
-            image = np.concatenate([rgb, alpha], axis=2)
-        elif cc == 3 and channels == 1:
+    cc = image.shape[2]
+    if cc == 1 and channels in (3, 4):
+        image = np.repeat(image, 3, axis=2)
+        cc = 3
+    if cc == 3 and channels == 4:
+        alpha = np.full(image.shape[:2] + (1,), 255, dtype=image.dtype)
+        image = np.concatenate([image, alpha], axis=2)
+        cc = 4
+    elif cc == 4 and channels == 3:
+        image = image[:, :, :3]
+        cc = 3
+    elif cc == 4 and channels == 1:
+        rgb = image[..., :3]
+        alpha = image[..., 3:4] / 255.0
+        image = (np.mean(rgb, axis=2, keepdims=True) * alpha).astype(image.dtype)
+        cc = 1
+    elif cc != channels:
+        if channels == 1:
             image = image_grayscale(image)
-            #image = np.mean(image, axis=2, keepdims=True).astype(image.dtype)
-        elif cc == 3 and channels == 4:
-            alpha = np.full(image.shape[:2] + (1,), matte[3], dtype=image.dtype)
-            image = np.concatenate([image, alpha], axis=2)
-        elif cc == 4 and channels == 1:
-            rgb = image[..., :3]
-            alpha = image[..., 3:4] / 255.0
-            image = (np.mean(rgb, axis=2, keepdims=True) * alpha).astype(image.dtype)
-        elif cc == 4 and channels == 3:
-            image = image[..., :3]
+        else:
+            image = np.repeat(image, channels, axis=2)
 
-    # Resize if width or height is specified
+    # Resize
     h, w = image.shape[:2]
     new_width = width if width > 0 else w
     new_height = height if height > 0 else h
+
     if (new_width, new_height) != (w, h):
-        # Create a new image with the matte color
-        new_image = np.full((new_height, new_width, channels), matte[:channels], dtype=image.dtype)
+        # Create base canvas with matte RGB and alpha=0 if needed
+        if channels == 4:
+            base_color = np.array(list(matte[:3]) + [0], dtype=image.dtype)
+        else:
+            base_color = np.array(matte[:channels], dtype=image.dtype)
+        new_image = np.full((new_height, new_width, channels), base_color, dtype=image.dtype)
+
         paste_x = (new_width - w) // 2
         paste_y = (new_height - h) // 2
-        new_image[paste_y:paste_y+h, paste_x:paste_x+w] = image[:h, :w]
+        new_image[paste_y:paste_y + h, paste_x:paste_x + w] = image
+
+        # Ensure pasted area alpha = 255 if RGBA
+        if channels == 4:
+            new_image[paste_y:paste_y + h, paste_x:paste_x + w, 3] = 255
+
         image = new_image
 
     return image
@@ -97,12 +111,12 @@ def image_grayscale(image: ImageType, use_alpha: bool=False) -> ImageType:
     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     return np.expand_dims(image, axis=-1)
 
-def image_mask(image: ImageType, color: int=255) -> ImageType:
+def image_mask(image: ImageType, color: int=0) -> ImageType:
     """Get the alpha mask from the image, if any, otherwise return one based on color value.
 
     Args:
         image: Input image, assumed to be 2D or 3D (with or without alpha channel).
-        color: Value to fill the mask (default is 255).
+        color: Value to fill the mask (default is 0).
 
     Returns:
         ImageType: Mask of the image, either the alpha channel or a full mask of the given color.

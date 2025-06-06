@@ -98,7 +98,7 @@ def image_lerp(imageA: ImageType, imageB:ImageType, mask:ImageType=None,
 
 def image_minmax(image: List[ImageType]) -> Tuple[int, int, int, int]:
     h_min = w_min = 100000000000
-    h_max = w_max = IMAGE_SIZE_MIN
+    h_max = w_max = 1
     for img in image:
         if img is None:
             continue

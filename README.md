@@ -1,6 +1,10 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/06/06** @0.0.34:
+* default width, height to 1
+* better image convert with full mask support
+
 **2025/05/31** @0.0.33:
 * patch around data returned in widgets waiting for ComfyUI PR 8127
 

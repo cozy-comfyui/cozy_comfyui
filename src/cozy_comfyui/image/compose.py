@@ -126,7 +126,7 @@ def image_blend(background: ImageType, foreground: ImageType, mask:Optional[Imag
     # prep B
     cc = foreground.shape[2] if foreground.ndim > 2 else 1
     foreground = image_convert(foreground, 4, w, h)
-    old_mask = image_mask(foreground, 0)
+    old_mask = image_mask(foreground)
 
     if mask is None:
         mask = old_mask
@@ -141,7 +141,7 @@ def image_blend(background: ImageType, foreground: ImageType, mask:Optional[Imag
     alpha = np.clip(alpha, 0, 1)
     image = blendLayers(background, foreground, blendOp.value, alpha)
     image = pil_to_cv(image)
-    if cc == 4:
+    if cc != 1:
         image = image_mask_add(image, mask)
     return image
 
@@ -181,7 +181,7 @@ def image_crop_polygonal(image: ImageType, points: List[Coord2D_Float]) -> Image
     # Apply the mask to the cropped image
     point_mask_cropped = cv2.resize(point_mask[y:y+h, x:x+w], (w, h))
     if cc == 4:
-        mask = image_mask(image, 0)
+        mask = image_mask(image)
         alpha_channel = cv2.resize(mask[y:y+h, x:x+w], (w, h))
         cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGRA2BGR)
         cropped_image = cv2.bitwise_and(cropped_image, cropped_image, mask=point_mask_cropped)
@@ -200,8 +200,8 @@ def image_edge_wrap(image: ImageType, tileX: float=1., tileY: float=1.,
     tileY = int(height * tileY) if edge in [EnumEdge.WRAP, EnumEdge.WRAPY] else 0
     return cv2.copyMakeBorder(image, tileY, tileY, tileX, tileX, cv2.BORDER_WRAP)
 
-def image_flatten(image: List[ImageType], width:int=None, height:int=None,
-                  mode=EnumScaleMode.MATTE,
+def image_flatten(image: List[ImageType], offsetX:int=None, offsetY:int=None,
+                  width:int=None, height:int=None, mode=EnumScaleMode.MATTE,
                   sample:EnumInterpolation=EnumInterpolation.LANCZOS4) -> ImageType:
 
     if mode == EnumScaleMode.MATTE:
@@ -216,7 +216,12 @@ def image_flatten(image: List[ImageType], width:int=None, height:int=None,
     for x in image:
         if mode != EnumScaleMode.MATTE and mode != EnumScaleMode.RESIZE_MATTE:
             x = image_scalefit(x, width, height, mode, sample)
+        # matte
         x = image_matte(x, (0,0,0,0), width, height)
+        # Apply offset
+        M = np.float32([[1, 0, offsetX], [0, 1, offsetY]])
+        x = cv2.warpAffine(x, M, (width, height), borderMode=cv2.BORDER_TRANSPARENT)
+        # fit
         x = image_scalefit(x, width, height, EnumScaleMode.CROP, sample)
         x = image_convert(x, 4)
         current = cv2.add(current, x)
