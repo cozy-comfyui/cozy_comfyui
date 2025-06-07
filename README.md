@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/06/07** @0.0.35:
+* cleaned up image_convert for grayscale/mask
+
 **2025/06/06** @0.0.34:
 * default width, height to 1
 * better image convert with full mask support

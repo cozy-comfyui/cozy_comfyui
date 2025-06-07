@@ -39,19 +39,15 @@ def image_convert(image: ImageType, channels: int,
     cc = image.shape[2]
     if cc == 1 and channels in (3, 4):
         image = np.repeat(image, 3, axis=2)
-        cc = 3
     if cc == 3 and channels == 4:
         alpha = np.full(image.shape[:2] + (1,), 255, dtype=image.dtype)
         image = np.concatenate([image, alpha], axis=2)
-        cc = 4
     elif cc == 4 and channels == 3:
         image = image[:, :, :3]
-        cc = 3
     elif cc == 4 and channels == 1:
         rgb = image[..., :3]
         alpha = image[..., 3:4] / 255.0
         image = (np.mean(rgb, axis=2, keepdims=True) * alpha).astype(image.dtype)
-        cc = 1
     elif cc != channels:
         if channels == 1:
             image = image_grayscale(image)
@@ -100,16 +96,13 @@ def image_grayscale(image: ImageType, use_alpha: bool=False) -> ImageType:
     if image.shape[2] == 1:
         return image
 
+    grayscale = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    grayscale = np.expand_dims(grayscale, axis=-1)
     if image.shape[2] == 4:
-        grayscale = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
-        grayscale = np.expand_dims(grayscale, axis=-1)
         if use_alpha:
             alpha_channel = image[:,:,3] / 255.0
             grayscale = (grayscale * alpha_channel).astype(np.uint8)
-        return grayscale
-
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    return np.expand_dims(image, axis=-1)
+    return grayscale
 
 def image_mask(image: ImageType, color: int=0) -> ImageType:
     """Get the alpha mask from the image, if any, otherwise return one based on color value.
