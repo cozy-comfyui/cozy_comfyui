@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/06/18** @0.0.36:
+* support for hex code parsing into VEC4
+
 **2025/06/07** @0.0.35:
 * cleaned up image_convert for grayscale/mask
 

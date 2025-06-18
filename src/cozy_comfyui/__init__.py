@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.35"
+__version__ = "0.0.36"
 
 import os
 import sys
@@ -324,8 +324,19 @@ def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
     value_array: List[Any] = []
     for val in values:
         if isinstance(val, (str,)):
-            try: val = json.loads(val.replace("'", '"'))
-            except json.JSONDecodeError: pass
+            if val.startswith("#"):
+                val = val[1:]
+                if len(val) < 8:
+                    val += 'ff'
+                try:
+                    val = [int(val[i:i + 2], 16) for i in range(0, len(val), 2)]
+                except Exception as e:
+                    logger.error(e)
+            else:
+                try:
+                    val = json.loads(val.replace("'", '"'))
+                except json.JSONDecodeError:
+                    pass
             value_array.append(val)
         # see if we are a Jovimetrix hacked vector blob... {0:x, 1:y, 2:z, 3:w}
         elif isinstance(val, dict):
