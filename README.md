@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/06/28** @0.0.37:
+* support for dynamic parse to return single list or list of list
+
 **2025/06/18** @0.0.36:
 * support for hex code parsing into VEC4
 

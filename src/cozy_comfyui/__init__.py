@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.36"
+__version__ = "0.0.37"
 
 import os
 import sys
@@ -97,14 +97,17 @@ def load_file(fname: str) -> str | None:
     except Exception as e:
         logger.error(e)
 
-def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: Any) -> List[Any]:
-    """Convert iterated input field(s) based on a s into a single compound list of entries.
+def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: Any, extend:bool=True) -> List[Any]:
+    """Convert iterated input field(s) into a single compound list of entries.
 
     The default will just look for all keys as integer:
 
         `#_<field name>` or `#_<prefix>_<field name>`
 
     This will return N entries in a list based on the prefix pattern or not.
+
+    You can also turn off `extend` and each "group" will process itself into a list of list entries
+    [[0, 1, 2], [0, 1, 2]]
 
     """
     vals: List[Any] = []
@@ -118,7 +121,10 @@ def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: A
         for k in keys:
             if k.startswith(f"{i}_") or k.startswith(f"{i}_{prefix}_"):
                 val = parse_param(data, k, typ, default)
-                vals.extend(val)
+                if extend:
+                    vals.extend(val)
+                else:
+                    vals.append(val)
                 found = True
                 break
 
