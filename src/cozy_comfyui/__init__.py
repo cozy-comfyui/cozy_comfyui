@@ -1,12 +1,12 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.37"
+__version__ = "0.0.38"
 
 import os
 import sys
 import json
 from enum import Enum
-from typing import Any, Dict, List, Generator, Optional, Tuple, TypeAlias
+from typing import Any, Generator, Optional, TypeAlias
 
 from loguru import logger as loguru_logger
 import torch
@@ -16,8 +16,8 @@ import torch
 # ==============================================================================
 
 TensorType: TypeAlias = torch.Tensor
-RGBAMaskType: TypeAlias = Tuple[TensorType, ...]
-InputType: TypeAlias = Dict[str, Any]
+RGBAMaskType: TypeAlias = tuple[TensorType, ...]
+InputType: TypeAlias = dict[str, Any]
 
 # ==============================================================================
 # === CONSTANT ===
@@ -97,7 +97,7 @@ def load_file(fname: str) -> str | None:
     except Exception as e:
         logger.error(e)
 
-def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: Any, extend:bool=True) -> List[Any]:
+def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: Any, extend:bool=True) -> list[Any]:
     """Convert iterated input field(s) into a single compound list of entries.
 
     The default will just look for all keys as integer:
@@ -110,7 +110,7 @@ def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: A
     [[0, 1, 2], [0, 1, 2]]
 
     """
-    vals: List[Any] = []
+    vals: list[Any] = []
     fail = 0
     keys = data.keys()
     for i in range(100):
@@ -135,7 +135,7 @@ def parse_dynamic(data: InputType, prefix: str, typ: EnumConvertType, default: A
 
 def parse_value(val: Any, typ: EnumConvertType, default: Any,
                 clip_min: Optional[float]=None, clip_max: Optional[float]=None,
-                zero: float=0.) -> List[Any]|None:
+                zero: float=0.) -> list[Any]|None:
     """Convert target value into the new specified type."""
 
     if typ == EnumConvertType.ANY:
@@ -311,7 +311,7 @@ def parse_value(val: Any, typ: EnumConvertType, default: Any,
 
 def parse_param(data:InputType, key:str, typ:EnumConvertType, default: Any,
                 clip_min: Optional[float]=None, clip_max: Optional[float]=None,
-                zero:int=0) -> List[Any]:
+                zero:int=0) -> list[Any]:
     """Convenience because of the dictionary parameters."""
     values = data.get(key, default)
     if typ == EnumConvertType.ANY:
@@ -321,13 +321,13 @@ def parse_param(data:InputType, key:str, typ:EnumConvertType, default: Any,
 
 def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
                 clip_min: Optional[float]=None, clip_max: Optional[float]=None,
-                zero:int=0) -> List[Any]:
+                zero:int=0) -> list[Any]:
     """Convert list of values into a list of specified type."""
 
     if not isinstance(values, (list,)):
         values = [values]
 
-    value_array: List[Any] = []
+    value_array: list[Any] = []
     for val in values:
         if isinstance(val, (str,)):
             if val.startswith("#"):
@@ -390,7 +390,7 @@ def parse_param_list(values:Any, typ:EnumConvertType, default: Any,
 
     return [parse_value(v, typ, default, clip_min, clip_max, zero) for v in value_array]
 
-def zip_longest_fill(*iterables: Any) -> Generator[Tuple[Any, ...], None, None]:
+def zip_longest_fill(*iterables: Any) -> Generator[tuple[Any, ...], None, None]:
     """
     Zip longest with fill value.
 

@@ -6,7 +6,7 @@ import inspect
 import importlib
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from cozy_comfyui import \
     COZY_INTERNAL, \
@@ -76,7 +76,7 @@ def load_module(root:str, name: str) -> None|ModuleType:
 
 def loader(root_str: str, pack: str, directory: str='',
            category: str="COZY COMFYUI ☕",
-           rename: bool=True) -> Tuple[Dict[str, object], Dict[str, str]]:
+           rename: bool=True) -> tuple[dict[str, object], dict[str, str]]:
     """
     rename will force the new name from the existing definition on the old node.
     Currently used to support older Jovimetrix nodes
@@ -161,7 +161,7 @@ class CozyBaseNode:
     FUNCTION = "run"
 
     @classmethod
-    def INPUT_TYPES(cls, prompt:bool=False, extra_png:bool=False, dynprompt:bool=False) -> Dict[str, str]:
+    def INPUT_TYPES(cls, prompt:bool=False, extra_png:bool=False, dynprompt:bool=False) -> dict[str, str]:
         data: InputType = {
             "required": {},
             "hidden": {

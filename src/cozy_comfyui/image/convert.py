@@ -2,7 +2,6 @@
 
 import base64
 from io import BytesIO
-from typing import Tuple
 
 import cv2
 import torch
@@ -215,7 +214,7 @@ def cv_to_tensor(image: ImageType, grayscale: bool=False) -> TensorType:
     image = image.astype(np.float32) / 255.0
     return torch.from_numpy(image)
 
-def cv_to_tensor_full(image: ImageType, matte:RGBA_Int=(0,0,0,255)) -> Tuple[TensorType, ...]:
+def cv_to_tensor_full(image: ImageType, matte:RGBA_Int=(0,0,0,255)) -> tuple[TensorType, ...]:
     rgba = image_convert(image, 4, matte=matte)
     rgb = rgba[...,:3]
     mask = rgba[...,3]

@@ -1,7 +1,6 @@
 """ Image Coordinates and Mapping """
 
 from enum import Enum
-from typing import List
 
 import cv2
 import numpy as np
@@ -59,7 +58,7 @@ def coord_fisheye(width: int, height: int, distortion: float) -> tuple[ImageType
     xu, yu = ((xdu + 1) * width) / 2, ((ydu + 1) * height) / 2
     return xu.astype(np.float32), yu.astype(np.float32)
 
-def coord_perspective(width: int, height: int, pts: List[Coord2D_Float]) -> ImageType:
+def coord_perspective(width: int, height: int, pts: list[Coord2D_Float]) -> ImageType:
     object_pts = np.float32([[0, 0], [width, 0], [width, height], [0, height]])
     pts = np.float32(pts)
     pts = np.column_stack([pts[:, 0], pts[:, 1]])

@@ -1,8 +1,6 @@
 """ Maths Easing Function Support """
 
-from typing import List
-
-def seriesLinear(start=0.0, step=1.0, count=10, loop=None, pingpong=False) -> List[float]:
+def seriesLinear(start=0.0, step=1.0, count=10, loop=None, pingpong=False) -> list[float]:
     result = []
 
     # Calculate how many steps in each loop

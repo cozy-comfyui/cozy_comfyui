@@ -1,7 +1,6 @@
 """ Image Color Support """
 
 from enum import Enum
-from typing import List
 
 import cv2
 import numpy as np
@@ -180,7 +179,7 @@ def color_blind(image: ImageType, deficiency:EnumCBDeficiency,
         image = image_mask_add(image, mask)
     return image
 
-def color_lut_full(dominant_colors: List[tuple[int, int, int]], nodes:int=33) -> ImageType:
+def color_lut_full(dominant_colors: list[tuple[int, int, int]], nodes:int=33) -> ImageType:
     """
     Create a 3D LUT by mapping each RGB value to the closest dominant color.
     This version is optimized for speed using vectorization.
@@ -222,7 +221,7 @@ def color_lut_match(image: ImageType, colormap:int=cv2.COLORMAP_JET,
         image[..., 3] = alpha[..., 0]
     return image
 
-def color_lut_palette(colors: List[tuple[int, int, int]], size: int=32) -> ImageType:
+def color_lut_palette(colors: list[tuple[int, int, int]], size: int=32) -> ImageType:
     """
     Create a color palette LUT as a 2D image from the top colors.
 
@@ -244,7 +243,7 @@ def color_lut_palette(colors: List[tuple[int, int, int]], size: int=32) -> Image
 
     return lut_image
 
-def color_lut_tonal(colors: List[tuple[int, int, int]], width: int=256, height: int=32) -> ImageType:
+def color_lut_tonal(colors: list[tuple[int, int, int]], width: int=256, height: int=32) -> ImageType:
     """
     Create a 2D tonal palette LUT as a grid image from the top colors.
 
@@ -397,7 +396,7 @@ def color_mean(image: ImageType) -> ImageType:
             int(np.mean(image[:,:,2])) ]
     return color
 
-def color_top_used(image: ImageType, top_n: int=8) -> List[tuple[int, int, int]]:
+def color_top_used(image: ImageType, top_n: int=8) -> list[tuple[int, int, int]]:
     """
     Find dominant colors in an image using k-means clustering.
 

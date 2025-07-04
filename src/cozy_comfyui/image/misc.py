@@ -2,7 +2,6 @@
 
 import sys
 from enum import Enum
-from typing import List, Tuple
 
 import cv2
 import torch
@@ -31,7 +30,7 @@ class EnumImageBySize(Enum):
 # === SUPPPORT ===
 # ==============================================================================
 
-def image_by_size(image_list: List[ImageType],
+def image_by_size(image_list: list[ImageType],
                   enumSize: EnumImageBySize=EnumImageBySize.LARGEST) -> tuple[ImageType, int, int]:
 
     img = None
@@ -96,7 +95,7 @@ def image_lerp(imageA: ImageType, imageB:ImageType, mask:ImageType=None,
     imageA = (imageA * 255).astype(imageA.dtype)
     return np.clip(imageA, 0, 255)
 
-def image_minmax(image: List[ImageType]) -> Tuple[int, int, int, int]:
+def image_minmax(image: list[ImageType]) -> tuple[int, int, int, int]:
     h_min = w_min = 100000000000
     h_max = w_max = 1
     for img in image:
@@ -120,5 +119,5 @@ def image_normalize(image: ImageType) -> ImageType:
     image = (image - img_min) / (img_max - img_min)
     return (image * 255).astype(np.uint8)
 
-def image_stack(images: List[ImageType] ) -> RGBAMaskType:
+def image_stack(images: list[ImageType] ) -> RGBAMaskType:
     return [torch.stack(i) for i in zip(*images)]

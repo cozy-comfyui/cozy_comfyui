@@ -1,6 +1,6 @@
 """."""
 
-from typing import Any, Dict
+from typing import Any
 
 class LexiconMeta(type):
     def __new__(cls, name, bases, dct) -> object:
@@ -262,7 +262,7 @@ class Lexicon(metaclass=LexiconMeta):
     ZOOM = "zoom", "Zoom level"
 
     @classmethod
-    def _parse(cls, node: dict) -> Dict[str, str]:
+    def _parse(cls, node: dict) -> dict[str, str]:
         for cat, entry in node.items():
             if cat not in ["optional", "required"]:
                 continue

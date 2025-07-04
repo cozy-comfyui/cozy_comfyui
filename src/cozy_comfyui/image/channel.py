@@ -1,7 +1,6 @@
 """Image channel operations."""
 
 from enum import Enum
-from typing import List
 
 import numpy as np
 
@@ -89,7 +88,7 @@ def channel_solid(width:int=IMAGE_SIZE_MIN, height:int=IMAGE_SIZE_MIN, color:Pix
         color = color[2::-1]
     return np.full((height, width, 4), color, dtype=np.uint8)
 
-def channel_merge(channels: List[ImageType]) -> ImageType:
+def channel_merge(channels: list[ImageType]) -> ImageType:
     max_height = max(ch.shape[0] for ch in channels if ch is not None)
     max_width = max(ch.shape[1] for ch in channels if ch is not None)
     num_channels = len(channels)

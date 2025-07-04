@@ -2,7 +2,6 @@
 
 import textwrap
 from enum import Enum
-from typing import List
 
 from matplotlib import font_manager
 from PIL import Image, ImageFont, ImageDraw
@@ -34,7 +33,7 @@ class EnumJustify(Enum):
 # === SUPPORT ===
 # ==============================================================================
 
-def font_names() -> List[str]:
+def font_names() -> list[str]:
     try:
         mgr = font_manager.FontManager()
         return {font.name: font.fname for font in mgr.ttflist}

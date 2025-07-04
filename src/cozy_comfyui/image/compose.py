@@ -1,7 +1,7 @@
 """ Image Composition Support """
 
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -145,7 +145,7 @@ def image_blend(background: ImageType, foreground: ImageType, mask:Optional[Imag
         image = image_mask_add(image, mask)
     return image
 
-def image_crop(image: ImageType, width:int=None, height:int=None, offset:Tuple[float, float]=(0, 0)) -> ImageType:
+def image_crop(image: ImageType, width:int=None, height:int=None, offset:tuple[float, float]=(0, 0)) -> ImageType:
     width = width if width is not None else w
     height = height if height is not None else h
     x, y = offset
@@ -170,7 +170,7 @@ def image_crop_center(image: ImageType, width:int=None, height:int=None) -> Imag
     points = [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
     return image_crop_polygonal(image, points)
 
-def image_crop_polygonal(image: ImageType, points: List[Coord2D_Float]) -> ImageType:
+def image_crop_polygonal(image: ImageType, points: list[Coord2D_Float]) -> ImageType:
     cc = image.shape[2] if image.ndim == 3 else 1
     height, width = image.shape[:2]
     point_mask = np.zeros((height, width), dtype=np.uint8)
@@ -200,7 +200,7 @@ def image_edge_wrap(image: ImageType, tileX: float=1., tileY: float=1.,
     tileY = int(height * tileY) if edge in [EnumEdge.WRAP, EnumEdge.WRAPY] else 0
     return cv2.copyMakeBorder(image, tileY, tileY, tileX, tileX, cv2.BORDER_WRAP)
 
-def image_flatten(image: List[ImageType], offsetX:int=None, offsetY:int=None,
+def image_flatten(image: list[ImageType], offsetX:int=None, offsetY:int=None,
                   width:int=None, height:int=None, mode=EnumScaleMode.MATTE,
                   sample:EnumInterpolation=EnumInterpolation.LANCZOS4) -> ImageType:
 
@@ -457,7 +457,7 @@ def image_split(image: ImageType) -> tuple[ImageType, ...]:
             a = image[:, :, 3]
     return r, g, b, a
 
-def image_stacker(image_list: List[ImageType],
+def image_stacker(image_list: list[ImageType],
                 axis:EnumOrientation=EnumOrientation.HORIZONTAL,
                 stride:int=0, matte:PixelType=(0,0,0,255)) -> ImageType:
 

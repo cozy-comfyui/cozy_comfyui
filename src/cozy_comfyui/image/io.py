@@ -1,7 +1,6 @@
 """Image processing support for format conversions."""
 
 import urllib
-from typing import List, Tuple
 
 import cv2
 import requests
@@ -24,7 +23,7 @@ from .misc import \
 # === SUPPPORT ===
 # ==============================================================================
 
-def image_load_exr(url: str) -> Tuple[ImageType, ...]:
+def image_load_exr(url: str) -> tuple[ImageType, ...]:
     """
     exr_file     = OpenEXR.InputFile(url)
     exr_header   = exr_file.header()
@@ -42,7 +41,7 @@ def image_load_exr(url: str) -> Tuple[ImageType, ...]:
     """
     pass
 
-def image_load(url: str) -> Tuple[ImageType, ...]:
+def image_load(url: str) -> tuple[ImageType, ...]:
     if url.lower().startswith("http"):
         response = requests.get(url, stream=True)
         response.raise_for_status()
@@ -87,7 +86,7 @@ def image_load(url: str) -> Tuple[ImageType, ...]:
     mask = image_mask(img)
     return img, mask
 
-def image_load_from_url(url: str, stream:bool=True) -> Tuple[ImageType, ...]:
+def image_load_from_url(url: str, stream:bool=True) -> tuple[ImageType, ...]:
     """Creates a CV2 BGR image from a url."""
     image = None
     mask = None
@@ -108,7 +107,7 @@ def image_load_from_url(url: str, stream:bool=True) -> Tuple[ImageType, ...]:
     mask = image_mask(image)
     return image, mask
 
-def image_save_gif(fpath:str, images: List[Image.Image], fps: int=0,
+def image_save_gif(fpath:str, images: list[Image.Image], fps: int=0,
                 loop:int=0, optimize:bool=False) -> None:
 
     fps = min(50, max(1, fps))

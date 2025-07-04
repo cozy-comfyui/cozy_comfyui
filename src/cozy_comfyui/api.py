@@ -1,7 +1,7 @@
 """."""
 
 import time
-from typing import Any, Dict
+from typing import Any
 
 from aiohttp import web
 from server import PromptServer
@@ -20,7 +20,7 @@ class ComfyAPIMessage:
     MESSAGE = {}
 
     @classmethod
-    def poll(cls, ident: str, period=0.01, timeout:float=3) -> Dict[str, Any]:
+    def poll(cls, ident: str, period=0.01, timeout:float=3) -> dict[str, Any]:
         """This is used on node execute runs to check if there are any stored messages"""
         if isinstance(ident, (list,)):
             ident = ident[0]
@@ -32,7 +32,7 @@ class ComfyAPIMessage:
             raise TimedOutException
         return cls.MESSAGE.pop(ident, {})
 
-def comfy_api_post(route:str, ident:str, data:Dict[str, Any]) -> None:
+def comfy_api_post(route:str, ident:str, data:dict[str, Any]) -> None:
     data['id'] = ident
     PromptServer.instance.send_sync(route, data)
 
