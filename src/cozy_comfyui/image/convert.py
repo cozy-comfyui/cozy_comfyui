@@ -38,8 +38,10 @@ def image_convert(image: ImageType, channels: int,
     cc = image.shape[2]
     if cc == 1 and channels in (3, 4):
         image = np.repeat(image, 3, axis=2)
+        cc = image.shape[2]
+
     if cc == 3 and channels == 4:
-        alpha = np.full(image.shape[:2] + (1,), 255, dtype=image.dtype)
+        alpha = np.full(image.shape[:2] + (1,), matte[3], dtype=image.dtype)
         image = np.concatenate([image, alpha], axis=2)
     elif cc == 4 and channels == 3:
         image = image[:, :, :3]
@@ -47,11 +49,8 @@ def image_convert(image: ImageType, channels: int,
         rgb = image[..., :3]
         alpha = image[..., 3:4] / 255.0
         image = (np.mean(rgb, axis=2, keepdims=True) * alpha).astype(image.dtype)
-    elif cc != channels:
-        if channels == 1:
-            image = image_grayscale(image)
-        else:
-            image = np.repeat(image, channels, axis=2)
+    elif channels == 1:
+        image = image_grayscale(image)
 
     # Resize
     h, w = image.shape[:2]
@@ -216,6 +215,7 @@ def cv_to_tensor(image: ImageType, grayscale: bool=False) -> TensorType:
 
 def cv_to_tensor_full(image: ImageType, matte:RGBA_Int=(0,0,0,255)) -> tuple[TensorType, ...]:
     rgba = image_convert(image, 4, matte=matte)
+    print(f'\n{rgba.shape[2]}')
     rgb = rgba[...,:3]
     mask = rgba[...,3]
     rgba = torch.from_numpy(rgba.astype(np.float32) / 255.0)
