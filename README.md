@@ -1,7 +1,7 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
-**2025/07/04** @0.0.39:
+**2025/07/07** @0.0.39:
 * Convert updated for proper alpha channel on RGBA
 
 **2025/07/04** @0.0.38:
