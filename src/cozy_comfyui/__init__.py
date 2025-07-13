@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.40"
+__version__ = "0.0.41"
 
 import os
 import sys

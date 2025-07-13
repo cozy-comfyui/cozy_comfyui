@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/07/13** @0.0.41:
+* removed old debug print string
+
 **2025/07/13** @0.0.40:
 * allow numpy>=1.25.0
 

@@ -215,7 +215,6 @@ def cv_to_tensor(image: ImageType, grayscale: bool=False) -> TensorType:
 
 def cv_to_tensor_full(image: ImageType, matte:RGBA_Int=(0,0,0,255)) -> tuple[TensorType, ...]:
     rgba = image_convert(image, 4, matte=matte)
-    print(f'\n{rgba.shape[2]}')
     rgb = rgba[...,:3]
     mask = rgba[...,3]
     rgba = torch.from_numpy(rgba.astype(np.float32) / 255.0)
