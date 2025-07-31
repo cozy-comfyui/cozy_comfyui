@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/07/31** @0.0.42:
+* support tensors in OP Unary and Binary conversions (uses mean)
+
 **2025/07/13** @0.0.41:
 * removed old debug print string
 

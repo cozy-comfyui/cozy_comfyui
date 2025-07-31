@@ -1,6 +1,6 @@
 """Cozy ComfyUI Node Support Library"""
 
-__version__ = "0.0.41"
+__version__ = "0.0.42"
 
 import os
 import sys
@@ -214,6 +214,8 @@ def parse_value(val: Any, typ: EnumConvertType, default: Any,
                 v = v.strip('\n').strip()
                 if v == '':
                     v = 0
+            elif isinstance(v, torch.Tensor):
+                v = v.mean()
 
             try:
                 if typ in [EnumConvertType.FLOAT, EnumConvertType.VEC2, EnumConvertType.VEC3, EnumConvertType.VEC4]:
