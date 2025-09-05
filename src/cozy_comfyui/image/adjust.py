@@ -61,6 +61,108 @@ class EnumThresholdAdapt(Enum):
 # === SUPPORT ===
 # ==============================================================================
 
+def image_autolevel(image: ImageType) -> ImageType:
+    """
+    Auto-level an image by stretching intensities to the full [0, 255] range.
+    Works for grayscale or RGB images.
+    """
+    img = image.astype(np.float32)
+
+    if img.ndim == 2:  # Grayscale
+        min_val, max_val = img.min(), img.max()
+        if max_val > min_val:
+            img = (img - min_val) / (max_val - min_val) * 255
+        return img.astype(np.uint8)
+
+    elif img.ndim == 3 and img.shape[2] == 3:  # RGB
+        out = np.zeros_like(img)
+        for c in range(3):
+            channel = img[..., c]
+            min_val, max_val = channel.min(), channel.max()
+            if max_val > min_val:
+                channel = (channel - min_val) / (max_val - min_val) * 255
+            out[..., c] = channel
+        return out.astype(np.uint8)
+
+    else:
+        raise ValueError("Image must be grayscale or RGB.")
+
+def image_autolevel(image: ImageType, clip_percent=1.0) -> ImageType:
+    """
+    Auto-level an image, safely handling RGBA by leaving alpha unchanged.
+    """
+    img = image.astype(np.float32)
+
+    if img.ndim == 2:  # Grayscale
+        lo = np.percentile(img, clip_percent)
+        hi = np.percentile(img, 100 - clip_percent)
+        if hi > lo:
+            img = np.clip(img, lo, hi)
+            img = (img - lo) / (hi - lo) * 255
+        return img.astype(np.uint8)
+
+    elif img.ndim == 3:
+        has_alpha = img.shape[2] == 4
+        channels = 3 if has_alpha else img.shape[2]
+        out = np.zeros_like(img)
+        for c in range(channels):
+            channel = img[..., c]
+            lo = np.percentile(channel, clip_percent)
+            hi = np.percentile(channel, 100 - clip_percent)
+            if hi > lo:
+                channel = np.clip(channel, lo, hi)
+                channel = (channel - lo) / (hi - lo) * 255
+            out[..., c] = channel
+        if has_alpha:
+            out[..., 3] = img[..., 3]  # preserve alpha
+        return out.astype(np.uint8)
+
+    else:
+        raise ValueError("Image must be grayscale or RGB(A).")
+
+def image_autolevel_histogram(image: ImageType, clip_percent=0.5) -> ImageType:
+    """
+    Auto-level an image using histograms per channel.
+    clip_percent: percentage to ignore at both low/high ends (0-100).
+    Works for grayscale, RGB, RGBA.
+    """
+    img = image.astype(np.float32)
+
+    if img.ndim == 2:  # Grayscale
+        return _stretch_channel_hist(img, clip_percent)
+
+    elif img.ndim == 3:
+        has_alpha = img.shape[2] == 4
+        channels = 3 if has_alpha else img.shape[2]
+        out = np.zeros_like(img)
+        for c in range(channels):
+            out[..., c] = _stretch_channel_hist(img[..., c], clip_percent)
+        if has_alpha:
+            out[..., 3] = img[..., 3]  # preserve alpha
+        return out.astype(np.uint8)
+    else:
+        raise ValueError("Image must be grayscale or RGB(A).")
+
+def _stretch_channel_hist(channel: np.ndarray, clip_percent: float) -> np.ndarray:
+    """
+    Stretch a single channel based on histogram, ignoring extremes.
+    """
+    # Compute histogram
+    hist, bins = np.histogram(channel, bins=256, range=(0, 255))
+    cdf = np.cumsum(hist)
+    total = cdf[-1]
+
+    # Find low/high cutoff indices
+    low_cut = total * (clip_percent / 100)
+    high_cut = total * (1 - clip_percent / 100)
+    lo_bin = np.searchsorted(cdf, low_cut)
+    hi_bin = np.searchsorted(cdf, high_cut)
+
+    if hi_bin > lo_bin:
+        channel = np.clip(channel, lo_bin, hi_bin)
+        channel = (channel - lo_bin) / (hi_bin - lo_bin) * 255
+    return channel.astype(np.uint8)
+
 def image_blur(image: ImageType, op: EnumAdjustBlur=EnumAdjustBlur.BLUR, kernel: int=1, sigmaX: float=0, sigmaY: float=0) -> ImageType:
     if kernel % 2 == 0:
         kernel += 1
@@ -78,7 +180,7 @@ def image_blur(image: ImageType, op: EnumAdjustBlur=EnumAdjustBlur.BLUR, kernel:
         case EnumAdjustBlur.MEDIAN_BLUR:
             return cv2.medianBlur(image, kernel)
 
-def image_brightness(image: ImageType, brightness: float=0):
+def image_brightness(image: ImageType, brightness: float=0) -> ImageType:
     brightness = np.clip(brightness, -1, 1) * 255
     if brightness > 0:
         shadow = brightness
@@ -351,24 +453,53 @@ def image_gamma(image: ImageType, gamma: float) -> ImageType:
     lookup_table = np.clip(table, 0, 255).astype(np.uint8)
     return cv2.LUT(image, lookup_table)
 
-def image_histogram(image:ImageType, bins=256) -> ImageType:
-    bins = max(image.max(), bins) + 1
-    flatImage = image.flatten()
-    histogram = np.zeros(bins)
-    for pixel in flatImage:
-        histogram[pixel] += 1
-    return histogram
+def image_histogram(image: ImageType, bins: int = 256) -> ImageType:
+    """
+    Compute histogram of a grayscale/RGB image and return as an RGB image.
+    """
+    # Convert to grayscale for histogram
+    if image.ndim == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = image
 
-def image_histogram_normalize(image:ImageType)-> ImageType:
-    L = image.max()
-    nonEqualizedHistogram = image_histogram(image, bins=L)
-    sumPixels = np.sum(nonEqualizedHistogram)
-    nonEqualizedHistogram = nonEqualizedHistogram/sumPixels
-    cfdHistogram = np.cumsum(nonEqualizedHistogram)
-    transformMap = np.floor((L-1) * cfdHistogram)
-    flatNonEqualizedImage = list(image.flatten())
-    flatEqualizedImage = [transformMap[p] for p in flatNonEqualizedImage]
-    return np.reshape(flatEqualizedImage, image.shape)
+    gray = gray.astype(np.uint8)
+
+    # Compute histogram
+    hist = cv2.calcHist([gray], [0], None, [bins], [0, 256])
+    hist = hist.ravel()
+    hist = hist / hist.max()  # normalize to 0..1
+
+    # Make canvas (height=bins, width=bins for square)
+    canvas = np.zeros((bins, bins, 3), dtype=np.uint8)
+
+    # Draw bars
+    for i, val in enumerate(hist):
+        h = int(val * bins)
+        cv2.line(canvas, (i, bins), (i, bins - h), (255, 255, 255), 1)
+    return canvas
+
+def image_histogram2(image: ImageType, bins=256) -> ImageType:
+    """
+    Compute a histogram of the image and return it as a grayscale visualization image.
+    """
+    # Compute histogram
+    if image.ndim == 3:  # Convert RGB to grayscale for histogram
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = image
+    hist = cv2.calcHist([gray], [0], None, [bins], [0, 256])
+
+    # Normalize to [0, 1]
+    hist = hist / hist.max()
+
+    # Create histogram image
+    hist_img = np.zeros((bins, bins, 3), dtype=np.uint8)
+    for x, h in enumerate(hist):
+        cv2.line(hist_img, (x, bins-1), (x, bins-1 - int(h * (bins-1))), (255, 255, 255), 1)
+
+    # hist_img = cv2.flip(hist_img, 0)
+    return hist_img
 
 def image_hsv(image: ImageType, hue: float, saturation: float, value: float) -> ImageType:
     image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)

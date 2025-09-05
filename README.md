@@ -1,6 +1,10 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/09/04** @0.0.42:
+* auto-level
+* histogram
+
 **2025/07/31** @0.0.42:
 * support tensors in OP Unary and Binary conversions (uses mean)
 

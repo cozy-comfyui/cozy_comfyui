@@ -361,8 +361,8 @@ def image_mirror(image: ImageType, mode:EnumMirrorMode, x:float=0.5,
 
     return image
 
-def image_resize(image: ImageType, width: int, height: int, sample: EnumInterpolation) -> ImageType:
-    return cv2.resize(image, (width, height), interpolation=sample)
+def image_resize(image: ImageType, width: int, height: int, sample: EnumInterpolation=EnumInterpolation.LANCZOS4) -> ImageType:
+    return cv2.resize(image, (width, height), interpolation=sample.value)
 
 def image_rotate(image: ImageType, angle: float, center:Coord2D_Float=(0.5, 0.5),
                  edge:EnumEdge=EnumEdge.CLIP) -> ImageType:
