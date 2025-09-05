@@ -6,9 +6,8 @@ class LexiconMeta(type):
     def __new__(cls, name, bases, dct) -> object:
         _tooltips = {}
         for attr_name, attr_value in dct.items():
-            if isinstance(attr_value, tuple):
-                attr_name = attr_value[1]
-                attr_value = attr_value[0]
+            if isinstance(attr_value, tuple) and len(attr_value) == 2:
+                attr_name, attr_value = attr_value
             _tooltips[attr_value] = attr_name
         dct["_tooltipsDB"] = _tooltips
         return super().__new__(cls, name, bases, dct)

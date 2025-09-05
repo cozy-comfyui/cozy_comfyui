@@ -1,6 +1,9 @@
 # cozy_comfyui
 Base class supports for writing comfyui nodes.
 
+**2025/09/04** @0.0.44:
+* tuple update for py 3.13
+
 **2025/09/04** @0.0.42:
 * auto-level
 * histogram
